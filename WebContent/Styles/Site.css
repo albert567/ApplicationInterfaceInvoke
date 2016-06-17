@@ -1,0 +1,508 @@
+﻿
+table, tr, td
+{
+	font-size: 10pt;
+	border: 1px solid #E9EAEA;
+	border-collapse: collapse;
+}
+#table1
+{
+	width: 100%;
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+#table1 td
+{
+	border: 1px solid black;
+	border-collapse: collapse;
+}
+#table
+{
+	width: 100%;
+}
+span
+{
+	font-size: 10pt;
+}
+/*列表标题行*/
+.headerTR
+{
+	background-color: #EAEAEA;
+	height: 35px;
+}
+/*列表标题列*/
+.headerTR td
+{
+	font-size: 11pt;
+	font-weight: bold;
+	filter: Alpha(Opacity=100, FinishOpacity=30, Style=1, StartX=0, StartY=0, FinishX=0, FinishY=100);
+	text-align: center;
+}
+/*列表标题列*/
+.headerTR #check
+{
+	width: 10%;
+	text-align: center;
+}
+.headerTR #title
+{
+	padding-left: 8%;
+	text-align: left;
+}
+.headerTR #buyInfo
+{
+	width: 15%;
+	text-align: center;
+}
+.headerTR #status
+{
+	text-align: center;
+}
+/*列表内容列*/
+.contentTR td
+{
+	text-align: center;
+}
+.contentTR .check
+{
+	text-align: center;
+}
+.contentTR .title
+{
+	padding-left: 8%;
+	text-align: left;
+}
+.contentTR .buyInfo
+{
+	width: 15%;
+	text-align: center;
+}
+.contentTR .status
+{
+	text-align: center;
+}
+.contentTR .detailcontent
+{
+	width: 11%;
+}
+
+/*列表内容行*/
+.contentTR
+{
+	font-size: 10pt;
+	height: 30px;
+}
+/*页面当前位置*/
+.tableLocation
+{
+	cellspacing: 0;
+	cellpadding: 0;
+	width: 100%;
+	border: 0px;
+}
+.tableLocation td
+{
+	align: left;
+	background-color: #EAEAEA;
+	border: 0px;
+	height: 28px;
+	vertical-align: middle;
+}
+/*创建订单*/
+.createDiv
+{
+	display: none;
+	position: absolute;
+	top: 30%;
+	left: 25%;
+	width: 40%;
+	border: 5px solid #D6E9F1;
+	z-index: 1002;
+}
+/*创建订单信息div*/
+.createDiv .menuInfo
+{
+	margin-top: 15px;
+	padding-left: 10px;
+}
+.createDiv .menuInfo a
+{
+	position: absolute;
+	left: 35%;
+	bottom: 5px;
+}
+.createDiv .menuInfo div
+{
+	float: left;
+	margin-left: 2px;
+}
+/*关闭按钮div*/
+.createDiv .close
+{
+	float: right;
+	clear: both;
+	width: 10%;
+	text-align: right;
+	margin: 0 0 6px 0;
+	position: absolute;
+	right: 3px;
+	top: -15px;
+}
+/*遮挡层*/
+.black_overlay
+{
+	display: none;
+	position: fixed;
+	top: 0%;
+	left: 0%;
+	width: 100%;
+	height: 100%;
+	background-color: #f5f5f5;
+	z-index: 1001;
+	-moz-opacity: 0.8;
+	opacity: .80;
+	filter: alpha(opacity=80);
+}
+.FlatButton
+{
+	text-decoration: none;
+	border: solid 1px #AAE;
+	color: #15B;
+	padding: 0.3em 0.5em;
+	font-size: 80%;
+}
+.FlatButton1
+{
+	background-color: White;
+	text-decoration: none;
+	border: solid 1px #AAE;
+	color: #15B;
+	padding: 0.3em 0.5em;
+	font-size: 80%;
+	width: 35px;
+}
+a
+{
+	color: #15B;
+	text-decoration: none;
+}
+
+/*搜索div*/
+.divSearch
+{
+	float: left;
+	margin-top: 4px;
+	border: 1px solid #E9EAEA;
+	width: 50%;
+	height: 60px;
+	vertical-align: middle;
+}
+.divSearch1
+{
+	float: left;
+	margin-top: 4px;
+	border: 1px solid #E9EAEA;
+	width: 60%;
+	height: 60px;
+	vertical-align: middle;
+}
+.divSearch #divLocationControl
+{
+	margin-left: 15px;
+	margin-top: 20px;
+}
+.divSearch #divLocationControl div
+{
+	float: left;
+	margin-left: 2px;
+}
+.divSearch1 #divLocationControl
+{
+	margin-left: 90px;
+	margin-top: 20px;
+}
+.divSearch1 #divLocationControl div
+{
+	float: left;
+	margin-left: 2px;
+}
+
+/*按钮div*/
+.divButton
+{
+	margin-top: 4px;
+	float: right;
+	width: 48%;
+	height: 60px;
+	border: 1px solid #E9EAEA;
+	margin-left: 1%;
+}
+ .divButton1
+ {
+ 	margin-top: 4px;
+	float: right;
+	width: 38%;
+	height: 60px;
+	border: 1px solid #E9EAEA;
+	margin-left: 1%;
+ 	}
+.divButton div
+{
+	margin-left: 40px;
+	margin-top: 13px;
+	line-height: 2em;
+}
+
+.divButton1 div
+{
+	margin-left: 60px;
+	margin-top: 13px;
+	line-height: 2em;
+}
+.divButton2
+{
+	position: fixed;
+	right: 1%;
+	bottom: 5px;
+}
+.divButton2 div
+{
+	line-height: 2em;
+}
+.divButton3
+{
+	position: fixed;
+	left: 40%;
+	bottom: 5%;
+}
+.divButton3 div
+{
+	line-height: 2em;
+}
+/*占位符*/
+.divPlaceholder
+{
+	clear: both;
+	width: 100%;
+	height: 10px;
+}
+/*分页样式*/
+#Pagination
+{
+	float: right;
+	margin-top: 10px;
+}
+#Pagination .next
+{
+	margin-right: 0;
+}
+#paginationoptions
+{
+	display: none;
+}
+/*添加食物DIV*/
+.addDiv
+{
+	display: none;
+	position: fixed;
+	top: 10%;
+	left: 20%;
+	border: 5px solid #296bb9; /*border: 5px solid #D6E9F1;*/
+	z-index: 1002;
+	max-height: 70%;
+}
+.addDiv .close
+{
+	position: absolute;
+	right: 0px;
+	top: -15px;
+	width: 20px;
+	height: 20px;
+}
+.addDiv .Mark
+{
+	text-align: center;
+	background: #69B0E4;
+	position: absolute;
+	left: 5px;
+	top: -15px;
+	width: 100px;
+	height: 24px;
+	color: White;
+	padding-top: 2px;
+}
+.addDiv .Mark span
+{
+	font-size: 15pt;
+}
+.addDiv #DateList
+{
+	float: left;
+	border: 2px solid #296bb9;
+	margin-left: 10px;
+	margin-top: 5px;
+	width: 100px;
+	min-height: 50px;
+}
+.addDiv #FoodTypeList
+{
+	float: left;
+	border: 2px solid #296bb9;
+	width: 100px;
+	min-height: 50px;
+	margin-left: 10px;
+	margin-top: 5px;
+}
+.addDiv #FoodList
+{
+	float: left;
+	border: 0px;
+	position: relative;
+	margin-left: 10px;
+	margin-top: 5px;
+	margin-right: 10px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+.addDiv a
+{
+	border: 2px solid #296bb9;
+	margin-left: 35%;
+	margin-top: 25px;
+}
+.addDiv1
+{
+	display: none;
+	position: fixed;
+	top: 20%;
+	left: 30%;
+	border: 5px solid #296bb9;
+	z-index: 1002;
+	max-height: 70%;
+}
+.addDiv1 .close
+{
+	position: absolute;
+	right: 0;
+	top: -15px;
+	width: 20px;
+	height: 20px;
+}
+.addDiv1 .Mark
+{
+	text-align: center;
+	background: #69B0E4;
+	position: absolute;
+	left: 5px;
+	top: -15px;
+	width: 100px;
+	height: 24px;
+	padding-top: 2px;
+	color: White;
+}
+.addDiv1 .Mark span
+{
+	font-size: 15pt;
+}
+.addDiv1 #FoodTypeList
+{
+	float: left;
+	border: 2px solid #296bb9;
+	width: 100px;
+	min-height: 50px;
+	margin-left: 10px;
+	margin-top: 5px;
+}
+.addDiv1 #FoodList
+{
+	float: left;
+	border: 0px;
+	position: relative;
+	margin-left: 10px;
+	margin-top: 5px;
+	margin-right: 10px;
+	padding-left: 5px;
+	padding-right: 5px;
+}
+.addDiv1 a
+{
+	border: 2px solid #296bb9;
+	margin-left: 35%;
+	margin-top: 25px;
+}
+#divMsg
+{
+	position: absolute;
+	left: 40%;
+	top: 15%;
+	z-index: 1004;
+}
+
+#titleTable
+{
+	margin-top: 25px;
+	width: 100%;
+	border: 0px;
+}
+#titleTable tr
+{
+	border: 0px;
+	text-align: center;
+}
+#titleTable td
+{
+	border: 0px;
+	text-align: center;
+	font-size: 18pt;
+}
+#titleTable span
+{
+	font-size: 18pt;
+}
+#frameAttach
+{
+	width: 900;
+	frameborder: "0";
+	display: none;
+}
+.txtCount
+{
+	width: 30px;
+}
+.tdXH
+{
+	text-align: center;
+	width: 40px;
+}
+.tdMC
+{
+	width: 40px;
+}
+.tdRQXQ
+{
+	text-align: center;
+	width: 120px;
+}
+.tdRQ
+{
+	text-align: center;
+	width: 80px;
+}
+.tdZT
+{
+	text-align: center;
+	width: 60px;
+}
+.imagecz
+{
+        border-bottom: 0px; 
+        border-left: 0px; 
+        width: 20px; 
+        height: 20px; 
+        border-top: 0px; 
+        border-right: 0px;
+}
+ .datagrid-row 
+ {
+        height: 35px;
+ }

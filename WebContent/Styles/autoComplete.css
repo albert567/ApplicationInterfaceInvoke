@@ -1,0 +1,32 @@
+﻿ .autoComplete_Group 
+ {
+        border: 1px solid #817F82;
+        position: absolute;
+        overflow-y:auto;
+        overflow-x:hidden;
+        display:none;
+    }
+    
+    .autoComplete_Group table
+    {
+        /*table-layout: fixed;*/
+        background: none repeat scroll 0 0 #FFFFFF;
+        cursor: default;
+        width: 100%;
+    }
+
+    .autoComplete_Group td 
+    {
+        /*white-space: nowrap;*/
+        /*overflow: hidden;*/
+        /*text-overflow: ellipsis;*/
+        color: #000000;
+        font: 14px/25px arial;
+        height: 25px;
+        padding: 0 8px;
+    }
+    
+    .autoComplete_Group .nowRow 
+    {
+        background-color:#EBEBEB;
+    }

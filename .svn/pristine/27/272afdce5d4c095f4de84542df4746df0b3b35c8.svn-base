@@ -1,0 +1,64 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<title>登陆</title>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" charset="UTF-8" />
+<link rel="stylesheet" type="text/css"
+	href="./Scripts/jquery-easyui-1.4.1/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="./Scripts/jquery-easyui-1.4.1/themes/icon.css" />
+<link rel="stylesheet" type="text/css" href="./Styles/Site.css" />
+</head>
+<style>
+td{padding: 5px;border: none;}
+tr{border: none;}
+</style>
+<script type="text/javascript">
+		if(parent.location.href.indexOf("login.html")<0)
+		{
+			window.parent.location.reload();
+		}
+	</script>
+<body style="background:url('./Images/bg.jpg');">
+    <div style="font-size: 12px;padding: 50px">
+  <a style="color: #ccc" href="javascript:void(0);" onClick="login('cwtest')">所有权限</a>&nbsp;&nbsp;&nbsp;|
+  <a style="color: #ddd" href="javascript:void(0);" onClick="login('lsl')">应用、数据库</a>&nbsp;&nbsp;&nbsp;|
+  <a style="color: #eee" href="javascript:void(0);" onClick="login('zykou')">应用、数据库、数据字典</a>&nbsp;&nbsp;&nbsp;|
+  <a style="color: #fff" href="javascript:void(0);" onClick="login('wshi')">权限、应用、数据库</a>&nbsp;&nbsp;&nbsp;
+
+  </div>
+  <form  action="./login" method="post" style="display:block;width:300px; margin:0 auto;margin-top: 150px;border-style: outset;padding: 50px;border-radius: 15px;">
+	  <table style="margin:0 auto;border: none">
+	  		<tr>
+	  			<td  style="color: #eef">用户名:</td>
+	  			<td><span class="textbox"><input style="color:#ccc" class=" textbox-text" id="user" type="text" name="username" /></span>	</td>
+	  		</tr>
+	  		<tr>
+	  			<td  style="color: #eef">密码:</td>
+	  			<td><span class="textbox"><input style="color:#ccc" class="textbox-text"  id="pass" type="password" name="password"/></span>
+	  			</td>
+	  		</tr>
+	  		<tr>
+	  			<td></td>
+	  			<td>
+	  	<input id="login" class="l-btn" style="width: 100px;height: 34px;float: right;" type="submit" value="登陆"/>
+	  			</td>
+	  		</tr>
+	  	</table>
+  </form>
+
+
+  <script type="text/javascript"
+		src="./Scripts/jquery-easyui-1.4.1/jquery.min.js"></script>
+	<script type="text/javascript" src="./Scripts/js/util.js"></script>
+	<script type="text/javascript" src="./Scripts/json2str.js"></script>
+	<script type="text/javascript"
+		src="./Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+	<script type="text/javascript"
+		src="./Scripts/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+	<script type="text/javascript" src="./Scripts/PIE.js"></script>
+	<script type="text/javascript" src="./Scripts/Common.js"></script>
+	<script type="text/javascript" src="./Scripts/js/Login.js"></script>
+
+</body>
+</html>

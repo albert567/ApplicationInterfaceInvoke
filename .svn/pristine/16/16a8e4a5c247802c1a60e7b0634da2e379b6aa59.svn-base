@@ -1,0 +1,166 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>数据库对象详细信息描述</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta charset="UTF-8">
+    <link rel="stylesheet" type="text/css" href="../Scripts/jquery-easyui-1.4.1/themes/default/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="../Scripts/jquery-easyui-1.4.1/themes/icon.css" />
+    <link rel="stylesheet" type="text/css" href="../Styles/Site.css" />
+	<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.min.js"></script>
+    <style type="text/css">
+        table.sample {
+	        border-width: 0px;
+	        border-spacing: 0px;
+	        border-style: hidden;
+        }
+        table.sample th {
+	        border-width: 0px;
+	        padding: 1px;
+	        border-style: hidden;
+        }
+        table.sample td {
+	        border-width: 0px;
+	        padding: 1px;
+	        border-style: hidden;
+        }
+    </style>
+
+</head>
+<body>
+	<div id="tt" class="easyui-tabs" style="width:100%;height:608px;">   
+		<div title="数据库对象字段信息" style="padding:20px;width:100%;height:100%">   
+        	<table id="dg" title="对象字段列表" style="width:100%;height:100%;overflow-y:scroll;"
+					data-options="
+		                singleSelect:true,
+		                toolbar: '#tb',
+						url:'../dbcol/getDbColList',
+		                loadMsg: '正在加载信息...',
+		                method: 'post',
+		                rownumbers:true,
+		                fitColumns:true,
+		                checkOnSelect:true,
+		                onBeforeLoad:function(param){
+		                    if(param.ObjID==undefined||param.ObjID==''){
+		                        return false;
+		                    }
+		                },
+		                onLoadError:function (){
+		                     window.location.href='../ErrorPage/AuthorityError.html';
+		                },
+		                onLoadSuccess:function(data){
+		                	$('.note').tooltip(
+		                		{
+		                			onShow:function(){
+		                				$(this).tooltip('update',$($(this).context).html().replace(/,/g,'<br>'));
+		                				$(this).tooltip('tip').css({width:'200',height:'100',
+		                				boxShadow:'1px 1px 3px #292929','word-break':'break-all'});
+		                			}
+		                		}
+		                	);
+		                }
+		                ">
+				<thead>
+					<tr>
+					<th data-options="field:'id',width:40,fitColumns:true,hidden:true">字段ID</th>
+		            <th data-options="field:'columnName',width:100,fitColumns:true">字段名称</th>
+		            <th data-options="field:'description',width:100,fitColumns:true">字段描述</th>
+		            <th data-options="field:'src',width:120,fitColumns:true,formatter:forSrc">字段数据源</th>
+		            <th data-options="field:'dvalue',width:80,fitColumns:true">字段类型</th>
+		            <th data-options="field:'length',width:80,fitColumns:true">字段长度</th>
+					</tr>
+				</thead>
+			</table>
+    	</div>
+    	<div title="使用该对象的方法信息" style="padding:20px;width:100%;height:100%">   
+    		<table id="dg1" class="easyui-datagrid" title="接口方法列表" style="width:100%;height:100%;overflow:scroll;"
+					data-options="
+		                singleSelect:true,
+						url:'../IMDORelation/getMethodByObjID',
+		                loadMsg: '正在加载信息...',
+		                method: 'post',
+		                rownumbers:true,
+		                fitColumns:true,
+		                checkOnSelect:true,
+		                onBeforeLoad:function(param){
+		                    if(param.ObjID==undefined||param.ObjID==''){
+		                        return false;
+		                    }
+		                },
+		                onLoadError:function (){
+		                     window.location('../ErrorPage/AuthorityError.html');
+		                }
+		                ">
+				<thead>
+					<tr>
+					<th data-options="field:'appName',width:80,fitColumns:true">应用名称</th>
+		            <th data-options="field:'interName',width:80,fitColumns:true">接口名称</th>
+		            <th data-options="field:'methodName',width:80,fitColumns:true">方法名称</th>
+		            <th data-options="field:'methodTypeName',width:80,fitColumns:true">方法类型</th>
+					</tr>
+				</thead>
+			</table>
+    	</div>
+	</div>
+    <input id ="bID" type="hidden" />
+    <script type="text/javascript" src="../Scripts/json2str.js"></script>
+	<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="../Scripts/PIE.js"></script>
+    <script type="text/javascript" src="../Scripts/Common.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            if (window.PIE) {
+                $('.rounded').each(function () {
+                    PIE.attach(this);
+                });
+            }
+            $('#dg').datagrid({
+                rowStyler: function (index, row) {
+                    return 'font-size:18pt;';
+                }
+            });
+            $('#dg1').datagrid({
+                rowStyler: function (index, row) {
+                    return 'font-size:18pt;';
+                }
+            });
+        });
+    </script>
+    <script type="text/javascript">
+        var ObjID;
+        //获取url参数
+        function getUrlInfos(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return decodeURI(r[2]); return null;
+        }
+        function forSrc(value,rowData,rowIndex){
+        	if(value==null){
+        		return;
+        	}
+        	var content = '<a href="#" title="'+value+'" class="note">'+value+'</a>';
+        	return content;
+        }
+        $(document).ready(function () {
+            //添加tips提示
+            /* $('#dg').datagrid('doCellTip',
+            {
+                onlyShowInterrupt: true,
+                position: 'bottom'
+            }); */
+            ObjID = getUrlInfos("ObjID");
+
+            if (ObjID != null && ObjID.toString().length > 0) {
+                $("#bID").attr("value", ObjID);
+                $('#dg').datagrid("load", {
+                	ObjID: ObjID
+                });
+                $('#dg1').datagrid("load", {
+                	ObjID: ObjID
+                });
+            }
+        });
+    </script>
+</body>
+</html>

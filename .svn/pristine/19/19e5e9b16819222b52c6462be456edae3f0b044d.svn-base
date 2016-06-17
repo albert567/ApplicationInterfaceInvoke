@@ -1,0 +1,221 @@
+package com.gwamcc.aii.dao.impl;
+
+
+import java.util.List;
+
+import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gwamcc.aii.dao.IMDORelationDao;
+import com.gwamcc.aii.dao.core.DefaultDao;
+import com.gwamcc.aii.dao.core.FormListValueFormatter;
+import com.gwamcc.aii.dao.core.SimpleDaoRowMapper;
+import com.gwamcc.aii.forms.DataBaseObjForm;
+import com.gwamcc.aii.forms.DbMethodForm;
+import com.gwamcc.aii.forms.DbObjColForm;
+import com.gwamcc.aii.forms.DbObjColNameForm;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.IMDORelationForm;
+import com.gwamcc.aii.forms.InterMethodForm;
+import com.gwamcc.aii.forms.MethodDbForm;
+import com.gwamcc.aii.forms.MsgFrom;
+import com.gwamcc.aii.forms.PageDataForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.util.ExcelKit;
+import com.gwamcc.aii.util.StrKit;
+import com.gwamcc.aii.util.excel.RowValidatorList;
+import com.gwamcc.aii.util.sql2.ConditionDefBuilder;
+import com.gwamcc.aii.util.sql2.ParamMap;
+import com.gwamcc.aii.util.template.anno.Template;
+
+/**
+ * 接口方法与数据库对象关系操作实现类
+ *
+ * @author 范大德
+ *
+ */
+@Repository
+@Template(key="IM_DBOC_Rel_.xlsx",value="C200_接口方法与数据库对象对应关系模板.xlsx")
+public class IMDORelationDaoImpl extends DefaultDao implements IMDORelationDao {
+	@Override
+	public List<DefaultForm> getMethodByObjID(int objID) {
+		return queryList(DbMethodForm.class, new ConditionDefBuilder().param("DataBaseObjID=:ObjID").define(),
+				new ParamMap().put("ObjID", objID));
+	}
+
+	@Override
+	public List<DefaultForm> getObjByMeID(int methodID) {
+		return queryList(MethodDbForm.class, new ConditionDefBuilder().param("InterfaceMethodID=:MethodID").define(),
+				new ParamMap().put("MethodID", methodID));
+	}
+
+	@Override
+	public DefaultForm append(IMDORelationForm app) throws Exception {
+		if (save(app)) {
+			return MsgFrom.info("新增成功!");
+		} else{
+			return MsgFrom.err("新增失败!");
+		}
+	}
+
+	@Override
+	public DefaultForm edit(IMDORelationForm app) throws Exception {
+		if (saveUpdate(app)) {
+			return MsgFrom.info("修改成功!");
+		} else {
+			return MsgFrom.err("修改失败!");
+		}
+	}
+
+	@Override
+	public DefaultForm remove(IMDORelationForm form)throws Exception {
+		if (delete(form)) {
+			return MsgFrom.info("删除成功!");
+		} else {
+			return MsgFrom.err("删除失败!");
+		}
+	}
+
+	@Override
+	public PageDataForm getList(IMDORelationForm form, PageForm page)throws Exception {
+		ConditionDefBuilder cond = new ConditionDefBuilder();
+		ParamMap map = new ParamMap();
+		cond.param("T_Application.IsValid=:appValid");
+		map.put("appValid", 1);
+		if (form != null) {
+			if(form.getMethodID()>0){
+				cond.param("T_IM_DBOC_Rel.InterfaceMethodID=:methodID");
+				map.put("methodID", form.getMethodID());
+			}
+			if (!StrKit.isEmpty(form.getDbName())) {
+				cond.param("T_DataBase.name like :getDbName");
+
+				map.put("getDbName", "%" + form.getDbName() + "%");
+			}
+			if (!StrKit.isEmpty(form.getObjName())) {
+				cond.param("T_DataBaseObj.objName like :getObjName");
+
+				map.put("getObjName", "%" + form.getObjName() + "%");
+			}
+			if (!StrKit.isEmpty(form.getColumnName())) {
+				cond.param("T_DataBaseObjCol.columnname like :getColumnName");
+
+				map.put("getColumnName", "%" + form.getColumnName() + "%");
+			}
+			if (form.getIsValid() >= 0) {
+				cond.param("T_IM_DBOC_Rel.ISVALID=:valid");
+				map.put("valid", form.getIsValid());
+			}
+		}
+		return queryPage(IMDORelationForm.class, page, new String[] { "id" }, cond.define(), map);
+	}
+
+
+
+
+	@Override
+	public Object upload(MultipartFile file) throws Exception {
+		List<DefaultForm> methodList=queryList(InterMethodForm.class,new ConditionDefBuilder().add("T_InterfaceMethod.IsValid=:valid").build(),new ParamMap().put("valid", 1));
+		List<DefaultForm>columnList=queryList(DbObjColForm.class,new ConditionDefBuilder().add("T_DataBaseObjCol.IsValid=:valid").build(),new ParamMap().put("valid", 1));
+		List<DefaultForm>dbObjList=queryList(DataBaseObjForm.class,new ConditionDefBuilder().add("T_DataBaseObj.IsValid=:valid").build(),new ParamMap().put("valid", 1));
+
+		return this.impExcel(ExcelKit.load(file, 0).title("AppName","InterfaceID","InterfaceMethodID",
+				"DataBaseID","DataBaseObjID","DataBaseObjColID","IsValid")
+				.addValidator(new RowValidatorList(0,1,2,3,4).required("数据不合法!"))
+				.addFormatter(2, new FormListValueFormatter(methodList) {//格式化接口方法ID
+
+					@Override
+					public Object format(Object value) {
+						for(DefaultForm def:getFormList()){
+							if (def instanceof InterMethodForm) {
+								InterMethodForm form = (InterMethodForm) def;
+								if(form.getAppName().equals(getCellValue(0))
+										&&form.getInterName().equals(getCellValue(1))
+										&&form.getMethodName().equals(value)){
+									return form.getMethodID();
+								}
+							}
+						}
+						return null;
+					}
+				})
+				.addFormatter(1, new FormListValueFormatter(methodList) {//格式化接口ID
+					@Override
+					public Object format(Object value) {
+						Object methodID=getFormatValue(2);
+						if(methodID==null){
+							return null;
+						}
+						for(DefaultForm def:getFormList()){
+							if (def instanceof InterMethodForm) {
+								InterMethodForm form = (InterMethodForm) def;
+								if(methodID.equals(form.getMethodID()))
+										return form.getInterID();
+								}
+							}
+						return null;
+					}
+				})
+				.addFormatter(5,new FormListValueFormatter(columnList) {//格式化数据库对象字段ID
+					@Override
+					public Object format(Object value) {
+						if(value==null){
+							return -1;
+						}else{
+							for(DefaultForm def:getFormList()){
+								if (def instanceof DbObjColForm) {
+									DbObjColForm form = (DbObjColForm) def;
+									if(form.getColumnName().equals(value)
+										&&form.getObjName().equals(getCellValue(4))
+										&&form.getDbName().equals(getCellValue(3))){
+										return form.getColID();
+									}
+								}
+							}
+						}
+						return null;
+					}
+				})
+				.addFormatter(4, new FormListValueFormatter(dbObjList) {//格式化数据库对象ID
+					@Override
+					public Object format(Object value) {
+						for(DefaultForm def:getFormList()){
+							if (def instanceof DataBaseObjForm) {
+								DataBaseObjForm form = (DataBaseObjForm) def;
+								if(form.getObjName().equals(value)
+									&&form.getDbName().equals(getCellValue(3))){
+									return form.getObjID();
+								}
+							}
+						}
+						return null;
+					}
+				})
+				.addFormatter(3,new FormListValueFormatter(dbObjList) {//格式化数据库ID
+
+					@Override
+					public Object format(Object value) {
+						Object objValue=getFormatValue(4);
+						for(DefaultForm def:getFormList()){
+							if (def instanceof DataBaseObjForm) {
+								DataBaseObjForm form = (DataBaseObjForm) def;
+								if(objValue.equals(form.getObjID())){
+									return form.getDbID();
+								}
+							}
+						}
+						return null;
+					}
+				})
+				.addValidator(new RowValidatorList(6).in(0,1))
+				, new SimpleDaoRowMapper(this, IMDORelationForm.class));
+
+	}
+
+
+	@Override
+	public Object download() throws Exception {
+		return TemplateDaoImpl.download(this.getClass());
+	}
+
+}

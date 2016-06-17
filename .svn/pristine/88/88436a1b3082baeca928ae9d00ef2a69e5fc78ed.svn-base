@@ -1,0 +1,331 @@
+/*[start]*/
+$(document).ready(function() {
+	$("#txtDbName").textbox('setValue',Util.param("dbName"));
+	$("#txtDbEn").textbox('setValue',Util.param("dbEn"));
+	$("#txtDbDesc").textbox('setValue',Util.param("description"));
+	var themecombo1 = [{
+						'IsValid' : '1',
+						'Text' : '有效'
+					}, {
+						'IsValid' : '0',
+						Text : '无效'
+					}];
+	$("#cmbIsValid").combobox("loadData", themecombo1).combobox(
+					"setValue", '1');
+	$("#cmbIsValid2").combobox("loadData", themecombo1).combobox(
+					"setValue", '1');
+	$("#tb").link({text:'数据展示',icon:"icon-Extension-chart_organisation",url:"Cola.html?type=DATABASE&id="+Util.param("dbID")});
+});
+
+function afterLoad(p){
+	p=JSON.parse(Base64.decode(p));
+	if(p.i){
+		var id=Util.param("dbID");
+		$("#tb").link({text:'PDM导入',icon:"icon-Extension-pdm",
+				click:'impPdm()',onlyRow:false});
+	}
+
+}
+
+function operator(value, rowData, rowIndex){
+	var x;
+	if(rowData.objTypeID=='0401'||rowData.objTypeID=='0404'){
+		x=Util.rowOperator(rowIndex).link({text:'参数',icon:'icon-Extension-tag',url:'ProcedureParam.html?dbID='+rowData.dbID
+			+'&objID='+rowData.objID+'&dbName='+escape(rowData.dbName)
+			+'&objName='+escape(rowData.objName)+'&objType='+escape(rowData.objTypeName)
+			+'&description='+escape(rowData.description)})
+			.link({text:'关联对象',icon:'icon-Extension-cmy',url:'DataBaseObjRel.html?dbID='+rowData.dbID
+			+'&objID='+rowData.objID+'&dbName='+escape(rowData.dbName)
+			+'&objName='+escape(rowData.objName)+'&objType='+escape(rowData.objTypeName)
+			+'&description='+escape(rowData.description)})
+			.html();
+	}else{
+		var x=Util.rowOperator(rowIndex).link({text:'字段',icon:'icon-Extension-tag_blue',url:'DataBaseObjCol.html?dbID='+rowData.dbID
+			+'&objID='+rowData.objID+'&dbName='+escape(rowData.dbName)
+			+'&objName='+escape(rowData.objName)+'&objType='+escape(rowData.objTypeName)
+			+'&objTypeID='+rowData.objTypeID
+			+'&description='+escape(rowData.description)})
+			.link({text:'关联对象',icon:'icon-Extension-cmy',url:'DataBaseObjRel.html?dbID='+rowData.dbID
+			+'&objID='+rowData.objID+'&dbName='+escape(rowData.dbName)
+			+'&objName='+escape(rowData.objName)+'&objType='+escape(rowData.objTypeName)
+			+'&description='+escape(rowData.description)})
+			.html();
+	}
+	return x;
+}
+
+function dbFormatter(value, rowData, rowIndex) {
+	return '<a id="Dbbtn' + rowIndex
+			+ '" href="javascript:void(0)"  onclick="goDbDetail(' + rowData.dbID
+			+ ')">' + value + '</a>';
+}
+function goDbDetail(dbID) {
+	window.open(
+					'DbDetail.html?DbID=' + dbID + '',
+					'newwin',
+					'height=560, width=1000, top=80, left=200, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no');
+}
+function dbObjFormatter(value, rowData, rowIndex) {
+	return '<a id="DbObjbtn' + rowIndex
+			+ '" href="javascript:void(0)"  onclick="goDbObjDetail('
+			+ rowData.objID + ',\''+rowData.objTypeID+'\')">' + value + '</a>';
+}
+function goDbObjDetail(objID,typeId) {
+	var url;
+	if(typeId=='0401'||typeId=='0404'){
+		url='ProcObjDetail.html?ObjID=' + objID;
+	}else{
+		url='DbObjDetail.html?ObjID=' + objID;
+	}
+	window
+			.open(
+					 url,
+					'newwin',
+					'height=560, width=1000, top=80, left=200, toolbar=no, menubar=no, scrollbars=no, resizable=no, location=no, status=no');
+
+}
+/*[end]*/
+function removeit(index) {
+	$("#dg").datagrid("selectRow",index);
+	var sele = $("#dg").datagrid("getSelected");
+	if (sele == null) {
+		$.messager.alert("提示", "请选择要删除的行!");
+		return;
+	}
+	$.messager.confirm('确认', '您确认要删除['+sele.dbName+']数据库中的[' + sele.objName + ']对象吗？', function(r) {
+				if (r) {
+					$.post("../dbobj/remove", {
+								"objID" : sele.objID
+							}, function(msg) {
+								$.messager.alert("提示", msg.message);
+								if (msg.success) {
+									findInfo();
+								}
+							}, "json");
+				}
+			});
+}
+
+
+
+function edit(index) {
+	$("#dg").datagrid("selectRow",index);
+	var sele = $("#dg").datagrid("getSelected");
+	if (sele == null) {
+		$.messager.alert("提示", "请选择要操作的行!");
+		return;
+	}
+	$("#editForm").form('load', sele);
+	$('#edit').window({
+				title : '修改数据库对象'
+			}).window('open');
+}
+
+function append() {
+	/*if(!Util.empty(Util.param('dbID'))){
+		$("#cmbdbID").combobox('select',Util.param('dbID'));
+	}*/
+	$("#editForm").form('load', {
+				objID : '-1',
+				objName : '',
+				dbID : Util.param('dbID'),
+				objTypeID : Util.param('objTypeID'),
+				isValid : '1',
+				description:''
+			});
+	$('#edit').window({
+				title : '新增数据库对象'
+			}).window('open');
+}
+
+function cancelEdit() {
+	$.messager.confirm('确认', '您确认要取消当前编辑吗？', function(r) {
+				if (r) {
+					$('#edit').window('close');
+				}
+			});
+}
+function submitEdit() {
+	$('#editForm').form('submit', {
+				url : "../dbobj/save",
+				onSubmit : function() {
+					validCbox("#cmbdbID");
+					return $(this).form('enableValidation').form('validate');
+				},
+				success : function(data) {
+					var data = eval('(' + data + ')');
+					$.messager.alert("提示", data.message);
+					if (data.success) {
+						$('#edit').window('close');
+						findInfo();
+					}
+				}
+			});
+}
+function findInfo() {
+	var keyWords = $('#txtKeyWords').val();
+	var dbnum = "0";
+	var DbValue = $('#cmbDb').combobox('getValue');
+	var DbText = $('#cmbDb').combobox('getText');
+	var objnum = "0";
+	var ObjValue = $('#cmbObj').combobox('getValue');
+	var ObjText = $('#cmbObj').combobox('getText');
+	var typenum = "0";
+	var TypeValue = $('#cmbObjType').combobox('getValue');
+	var TypeText = $('#cmbObjType').combobox('getText');
+	var isValid = $("#cmbIsValid").combobox("getValue");
+	var sDb = "";
+	var sObj = "";
+	var sType = "";
+	if (DbValue == -1) {
+		sDb = "";
+	} else {
+		dbnum = "1";
+		sDb = DbText;
+	}
+
+	if (ObjValue == -1) {
+		sObj = "";
+	} else {
+		objnum = "1";
+		sObj = ObjText;
+	}
+
+	if (TypeValue == -1) {
+		sType = "";
+	} else {
+		typenum = "1";
+		sType = TypeText;
+	}
+	$('#dg').datagrid({
+			url: '../dbobj/getObjList',
+			queryParams:{
+				"dbID":DbValue,
+				"dbName" : sDb,
+				"objName" : sObj,
+				"objTypeName" : sType,
+				"isValid" : isValid,
+				"description" : keyWords
+			}
+	});
+}
+
+function getDbObj() {
+	$('#cmbObj').combobox("clear")
+	$('#cmbObj').combobox('loadData', []);
+	var url = '../dbobj/getDbObj?DbID='
+			+ $('#cmbDb').combobox('getValue');
+	$('#cmbObj').combobox('reload', url);
+}
+
+function forIsValid(val, row, index) {
+	var ret = "";
+	if (row.isValid == "0") {
+		ret = '无效';
+		return ret;
+	} else if (row.isValid == "1") {
+		ret = '有效';
+		return ret;
+	} else {
+		return val;
+	}
+}
+
+
+/*[start] 导入*/
+function impPdm(){
+	$("#filebox_file_id_2").attr("accept",".pdm");
+	//alert("sad");
+	$('#impPdm').window('open');
+}
+
+function cancelImpPdm() {
+	$('#impPdm').window('close');
+}
+
+function subImpPdm() {
+	$('#impPdmForm').form('submit', {
+		url : "../dbobj/ImportPDM/"+Util.param("dbID"),
+		onSubmit : function() {
+			var x=$(this).form('enableValidation').form('validate');
+			if(x){
+				$("body").toggleLoading({msg:"上传中,请稍等..."});
+			}
+			return x;
+		},
+		success : function(data) {
+			$("body").toggleLoading();
+			var data = validResp(data);
+			if (data.success) {
+				afterImport(data.uuid);
+				//$.messager.alert("提示", "导入成功!共导入了 " + data.total + "条数据!");
+				$('#impPdm').window('close');
+				findInfo();
+			} else {
+				$.messager.alert("导入失败", data.message);
+			}
+		},
+		error:function(){
+			$("body").toggleLoading();
+			$.messager.alert("提示", "操作失败!");
+		}
+	});
+}
+
+function imp(){
+	$('#imp').window('open');
+}
+
+function cancelImp() {
+	$('#imp').window('close');
+}
+
+function subImp() {
+	$('#impForm').form('submit', {
+		url : "../dbobj/Import",
+		onSubmit : function() {
+			var x=$(this).form('enableValidation').form('validate');
+			if(x){
+				$("body").toggleLoading({msg:"上传中,请稍等..."});
+			}
+			return x;
+		},
+		success : function(data) {
+			$("body").toggleLoading();
+			var data = validResp(data);
+			if (data.success) {
+				afterImport(data.uuid);
+				//$.messager.alert("提示", "导入成功!共导入了 " + data.total + "条数据!");
+				$('#imp').window('close');
+				findInfo();
+			} else {
+				var msg = "";
+				$.each(data.errMsg, function(i, m) {
+							msg += m + "<br/>";
+						});
+				var msgDiv = "<div style='display:none'><div id='msgDialog' >"
+						+ msg + "</div></div>";
+				var msg = '导入失败!<br/><a id="errMsg" class="easyui-linkbutton" href="javascript:void(0)">>>查看详情</a>'
+						+ msgDiv;
+
+				$.messager.alert("提示", msg);
+				$('#msgDialog').dialog({
+							title : '导入错误日志',
+							width : 400,
+							height : 400,
+							closed : true,
+							modal : true
+						});
+				$("#errMsg").click(function() {
+							$('#msgDialog').dialog("open");
+						});
+
+			}
+		},
+		error:function(){
+			$("body").toggleLoading();
+			$.messager.alert("提示", "操作失败!");
+		}
+	});
+}
+/*[end] 导入数据*/

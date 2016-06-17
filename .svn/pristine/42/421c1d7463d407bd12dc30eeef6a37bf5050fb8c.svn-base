@@ -1,0 +1,52 @@
+package com.gwamcc.aii.service.impl;
+
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+
+import com.gwamcc.aii.dao.AppFuncCodeDao;
+import com.gwamcc.aii.forms.AppFuncCodeForm;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.PageDataForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.service.AppFuncCodeService;
+/**
+ * 应用功能源码关联服务实现类
+ * @author 张亚平
+ *
+ */
+@Service
+@CacheConfig(cacheNames="T_AppFuncCode")
+public class AppFuncCodeServiceImpl implements AppFuncCodeService {
+	@Autowired
+    private AppFuncCodeDao dao;
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm save(int funcID, int[] nodes) throws Exception {
+		// TODO Auto-generated method stub
+		return dao.save(funcID,nodes);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public List<DefaultForm> getList(int appID, int funcID, int parentID) throws Exception {
+		// TODO Auto-generated method stub
+		return dao.getList(appID,funcID,parentID);
+	}
+	@Override
+	@Cacheable(key="#form.toString()+#page.toString()")
+	public PageDataForm getCodeList(AppFuncCodeForm form, PageForm page) throws Exception{
+		return dao.getCodeList(form,page);
+	}
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm remove(AppFuncCodeForm form) throws Exception{
+		return dao.remove(form);
+	}
+}

@@ -1,0 +1,871 @@
+package com.gwamcc.aii.dao.core;
+
+import org.apache.commons.logging.Log;
+import org.apache.commons.logging.LogFactory;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.sql.Statement;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
+import org.springframework.jdbc.core.namedparam.SqlParameterSource;
+import org.springframework.transaction.annotation.Transactional;
+
+import com.gwamcc.aii.exception.ExcelImportException;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.LogForm;
+import com.gwamcc.aii.forms.MsgFrom;
+import com.gwamcc.aii.forms.PageDataForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.forms.PageResultForm;
+import com.gwamcc.aii.forms.UpdateInfo;
+import com.gwamcc.aii.forms.UploadMsgForm;
+import com.gwamcc.aii.util.ExcelKit;
+import com.gwamcc.aii.util.sql2.Condition;
+import com.gwamcc.aii.util.sql2.ConditionDef;
+import com.gwamcc.aii.util.sql2.FieldInfo;
+import com.gwamcc.aii.util.sql2.ParamMap;
+import com.gwamcc.aii.util.sql2.Result;
+import com.gwamcc.aii.util.sql2.RowMap;
+import com.gwamcc.aii.util.sql2.SQLUtils;
+
+import config.Res;
+
+
+/**
+ * 数据库操作的顶层封装类
+ *
+ * @author 范大德
+ *
+ */
+public class DefaultDao {
+	/**
+	 * Logger for this class
+	 */
+	private static final Log logger = LogFactory.getLog(DefaultDao.class);
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+	@Autowired
+	private NamedParameterJdbcTemplate namedParameterJdbcTemplate;
+
+	private boolean printSql;
+
+	/**
+	 * 是否打印SQL
+	 *
+	 * @return
+	 */
+	public boolean isPrintSql() {
+		return printSql;
+	}
+
+	/**
+	 * 设置是否输出SQL语句
+	 *
+	 * @param printSql
+	 */
+	public void setPrintSql(boolean printSql) {
+		this.printSql = printSql;
+	}
+
+	/**
+	 * 根据主键保存修改的实体对象
+	 *
+	 * @param bean
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean save(List<DefaultForm> list) {
+		//批量获取当前操作对象
+		if(list==null||list.size()<1){
+			return true;
+		}
+		Class<?> fClass=list.get(0).getClass();
+		try {
+			for(DefaultForm def:list){
+				if (def.getUuid() == null) {
+					def.setUuid(UUID.randomUUID().toString());
+				}
+			}
+			String sql = SQLUtils.buildInsertSql(fClass);
+			return batchUpdate(sql, list,Res.LOG.OPERATION_INSERT);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
+	 * 保存新增的实体对象
+	 *
+	 * @param bean
+	 * @return
+	 */
+	public boolean save(DefaultForm bean) {
+		String logUUID = bean.get_log();
+		if (bean.getUuid() == null) {
+			bean.setUuid(UUID.randomUUID().toString());
+		}
+		String sql = SQLUtils.buildInsertSql(bean.getClass());
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("save(Object) - String sql=" + sql); //$NON-NLS-1$
+			logger.info("save(Object) - Param obj=" + bean.toString()); //$NON-NLS-1$
+		}
+		SqlParameterSource sps = new BeanPropertySqlParameterSource(bean);
+		boolean success = this.namedParameterJdbcTemplate.update(sql, sps) > 0;
+		if (success) {
+			// 保存添加日志
+			LogForm logBean = LogForm.newLog();
+			if (logUUID != null) {
+				logBean.setDataOperation(Res.LOG.OPERATION_IMPORT).setUuid(logUUID);
+			} else {
+				logBean.setDataOperation(Res.LOG.OPERATION_INSERT);
+			}
+			logBean.setDataTable(SQLUtils.loadTableName(bean.getClass())).setDataUUID(bean.getUuid())
+					.setLogMsg(bean.toString());
+			saveLog(logBean);
+		}
+		return success;
+	}
+
+	/**
+	 * 根据主键保存修改的实体对象
+	 *
+	 * @param bean
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean saveUpdate(List<DefaultForm> list) {
+		//批量获取当前操作对象
+		if(list==null||list.size()<1){
+			return true;
+		}
+		Class<?> fClass=list.get(0).getClass();
+		try {
+			String sql = SQLUtils.buildUpdateSql(fClass);
+			return batchUpdate(sql, list,Res.LOG.OPERATION_UPDATE);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
+	 * 根据主键保存修改的实体对象
+	 *
+	 * @param bean
+	 * @return
+	 * @throws Exception
+	 */
+	public boolean saveUpdate(DefaultForm bean) {
+		String sql = SQLUtils.buildUpdateSql(bean.getClass());
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("saveUpdate(Object) - String sql=" + sql); //$NON-NLS-1$
+			logger.info("saveUpdate(Object) - Param obj=" + bean.toString()); //$NON-NLS-1$
+		}
+
+		DefaultForm before = null;
+		String msg = null;
+		try {
+			FieldInfo pk = SQLUtils.getPK(bean.getClass());
+			before = (DefaultForm) queryEntity(bean.getClass(),
+					new ConditionDef(new Object[][] {
+							{ SQLUtils.loadTableName(bean.getClass()) + "." + pk.getDbFieldName() + "=:id" } }),
+					new ParamMap().put("id", SQLUtils.getFieldValue(pk, bean)));
+			msg = UpdateInfo.newUpdate(before, bean).toString();
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+
+		if (before.getUuid() == null) {
+			before.setUuid(UUID.randomUUID().toString());
+			bean.setUuid(before.getUuid());
+		}
+		SqlParameterSource sps = new BeanPropertySqlParameterSource(bean);
+		boolean success = this.namedParameterJdbcTemplate.update(sql, sps) > 0;
+		if (success) {
+			// 保存更新日志
+			LogForm logBean = LogForm.newLog();
+			logBean.setDataOperation(Res.LOG.OPERATION_UPDATE).setDataTable(SQLUtils.loadTableName(bean.getClass()))
+					.setDataUUID(before.getUuid()).setLogMsg(msg);
+			saveLog(logBean);
+		}
+		return success;
+	}
+
+	/**
+	 * 根据bean的pk来删除bean
+	 *
+	 * @param bean
+	 * @return
+	 */
+	public boolean delete(List<DefaultForm> list) {
+		//批量获取当前操作对象
+		if(list==null||list.size()<1){
+			return true;
+		}
+		Class<?> fClass=list.get(0).getClass();
+		try {
+			String sql = SQLUtils.buildDeleteSql(fClass);
+			return batchUpdate(sql, list,Res.LOG.OPERATION_DELETE);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+	}
+
+	/**
+	 * 根据bean的pk来删除bean
+	 *
+	 * @param bean
+	 * @return
+	 */
+	public boolean delete(Object bean) {
+		String sql = SQLUtils.buildDeleteSql(bean.getClass());
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("delete(Object) - String sql=" + sql); //$NON-NLS-1$
+			logger.info("delete(Object) - Param obj=" + bean.toString()); //$NON-NLS-1$
+		}
+		DefaultForm before = null;
+		try {
+			FieldInfo pk = SQLUtils.getPK(bean.getClass());
+			before = (DefaultForm) queryEntity(bean.getClass(),
+					new ConditionDef(new Object[][] {
+							{ SQLUtils.loadTableName(bean.getClass()) + "." + pk.getDbFieldName() + "=:id" } }),
+					new ParamMap().put("id", SQLUtils.getFieldValue(pk, bean)));
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+		SqlParameterSource sps = new BeanPropertySqlParameterSource(bean);
+		boolean success = this.namedParameterJdbcTemplate.update(sql, sps) > 0;
+		if (success) {
+			// 保存更新日志
+			LogForm logBean = LogForm.newLog();
+			logBean.setDataOperation(Res.LOG.OPERATION_DELETE).setDataTable(SQLUtils.loadTableName(bean.getClass()))
+					.setDataUUID(before.getUuid()).setLogMsg(before.toString());
+			saveLog(logBean);
+		}
+		return success;
+	}
+
+	/**
+	 * 根据bean的部分字段的条件来删除bean
+	 *
+	 * @param bean
+	 * @param fileds
+	 * @return
+	 * @throws Exception
+	 */
+	/*
+	 * public boolean deleteWithColumn(Object bean,String[] fileds) throws
+	 * Exception{ String sql = SQLUtils.buildDeleteSqlByColumns(bean.getClass(),
+	 * fileds); if (isPrintSql()&&logger.isInfoEnabled()) { logger.info(
+	 * "deleteWithColumn(Object, String[]) - String sql=" + sql); //$NON-NLS-1$
+	 * logger.info("deleteWithColumn(Object, String[]) - Param obj=" +
+	 * bean.toString()); //$NON-NLS-1$ }
+	 *
+	 * SqlParameterSource sps = new BeanPropertySqlParameterSource(bean); return
+	 * this.namedParameterJdbcTemplate.update(sql, sps)>0? true:false; }
+	 */
+
+	/**
+	 * 分页查询数据
+	 *
+	 * @param cs
+	 *            数据模型类型
+	 * @param page
+	 *            分页信息
+	 * @param orderBy
+	 *            排序信息
+	 * @param conditionDef
+	 *            查询条件定义
+	 * @param map
+	 *            查询条件参数
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("rawtypes")
+	public PageDataForm queryPage(Class cs, PageForm page, String[] orderBy, ConditionDef conditionDef, ParamMap map)
+			throws Exception {
+		return queryPage(cs, page, orderBy, conditionDef, map.get());
+	}
+
+	/**
+	 * 分页查询数据
+	 *
+	 * @param cs
+	 *            数据模型类型
+	 * @param page
+	 *            分页信息
+	 * @param orderBy
+	 *            排序信息
+	 * @param conditionDef
+	 *            查询条件定义
+	 * @param map
+	 *            查询条件参数
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings({ "rawtypes", "unchecked" })
+	public PageDataForm queryPage(Class cs, PageForm page, String[] orderBy, ConditionDef conditionDef,
+			Map<String, Object> map) throws Exception {
+		int total = queryCount(cs, conditionDef, map);
+		String where = "";
+		if (conditionDef != null) {
+			Condition condition = new Condition(conditionDef, map);
+			where = condition.getConditionClauseWithWhere();
+		}
+
+		String sql = SQLUtils.buildPageSql(cs, page, orderBy, where);
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("queryPage(Class, PageForm, String[], ConditionDef, Map<String,Object>) - String sql=" + sql); //$NON-NLS-1$
+			if (map != null) {
+				for (String key : map.keySet()) {
+					logger.info("queryPage(Class, PageForm, String[], ConditionDef, Map<String,Object>) - Param " + key //$NON-NLS-1$
+							+ "=" + map.get(key));
+				}
+			}
+		}
+
+		List list = namedParameterJdbcTemplate.query(sql, map, new DefaultRowMapper(cs));
+		return new PageDataForm(total, list);
+	}
+
+	/**
+	 * 查询数据列表
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param orderBy
+	 *            排序条件
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public List<DefaultForm> queryList(Class cs, String[] orderBy) {
+		return queryList(cs, orderBy, null, new ParamMap());
+	}
+
+	/**
+	 * 查询一列数据
+	 *
+	 * @param sql
+	 *            查询语句
+	 * @param params
+	 *            条件参数
+	 * @return
+	 */
+	public List<Object> queryOneFieldList(String sql, ParamMap params) {
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("queryOneFieldList(String,ParamMap) - String sql=" + sql); //$NON-NLS-1$
+			if (params.get() != null) {
+				for (String key : params.get().keySet()) {
+					logger.info("queryOneFieldList(String,ParamMap) - Param " + key + "=" + params.get().get(key)); //$NON-NLS-1$
+				}
+			}
+		}
+		return getNamedParameterJdbcTemplate().query(sql, params.get(), new RowMapper<Object>() {
+			@Override
+			public Object mapRow(ResultSet rs, int arg1) throws SQLException {
+				return rs.getObject(1);
+			}
+		});
+	}
+
+	/**
+	 * 查询所有数据列表
+	 *
+	 * @param cs
+	 *            数据模型类型
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public List<DefaultForm> queryList(Class cs) {
+		return queryList(cs, null, new ParamMap());
+	}
+
+	/**
+	 * 查询数据列表
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param conditionDef
+	 *            参数模板
+	 * @param paramMapArray
+	 *            参数数组 key,value,key,value
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public List<DefaultForm> queryList(Class cs, ConditionDef conditionDef, ParamMap params) {
+		return queryList(cs, conditionDef, params.get());
+	}
+
+	/**
+	 * 查询数据列表
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param conditionDef
+	 *            参数模板
+	 * @param paramMap
+	 *            参数表
+	 * @return
+	 */
+	public List<DefaultForm> queryList(@SuppressWarnings("rawtypes") Class cs, ConditionDef conditionDef,
+			Map<String, Object> paramMap) {
+		return queryList(cs, null, null, conditionDef, paramMap);
+	}
+
+	/**
+	 * 查询数据列表
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param groupBy
+	 *            分组依据
+	 * @param orderBy
+	 *            排序依据
+	 * @param conditionDef
+	 *            参数模板
+	 * @param paramMap
+	 *            参数表
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public List<DefaultForm> queryList(Class cs, String[] orderBy, ConditionDef conditionDef, ParamMap params) {
+		return queryList(cs, null, orderBy, conditionDef, params.get());
+	}
+
+	/**
+	 * 查询数据列表
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param groupBy
+	 *            分组依据
+	 * @param orderBy
+	 *            排序依据
+	 * @param conditionDef
+	 *            参数模板
+	 * @param paramMap
+	 *            参数表
+	 * @return
+	 */
+	@SuppressWarnings("rawtypes")
+	public List<DefaultForm> queryList(Class cs, String[] groupBy, String[] orderBy, ConditionDef conditionDef,
+			ParamMap params) {
+		return queryList(cs, groupBy, orderBy, conditionDef, params.get());
+	}
+
+	/**
+	 * 查询数据列表
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param groupBy
+	 *            分组依据
+	 * @param orderBy
+	 *            排序依据
+	 * @param conditionDef
+	 *            参数模板
+	 * @param paramMap
+	 *            参数表
+	 * @return
+	 */
+	@SuppressWarnings({ "unchecked", "rawtypes" })
+	public List<DefaultForm> queryList(Class cs, String[] groupBy, String[] orderBy, ConditionDef conditionDef,
+			Map<String, Object> paramMap) {
+		String sql = SQLUtils.buildSelectSql(cs);
+
+		if (conditionDef != null) {
+			Condition condition = new Condition(conditionDef, paramMap);
+			sql += condition.getConditionClauseWithWhere();
+		}
+		if (groupBy != null && groupBy.length > 0) {
+			sql += " group by ";
+			for (String g : groupBy) {
+				sql += g + ",";
+			}
+			sql = sql.substring(0, sql.lastIndexOf(","));
+		}
+
+		if (orderBy != null && orderBy.length > 0) {
+			sql += " order by ";
+			for (String o : orderBy) {
+				sql += o + ",";
+			}
+			sql = sql.substring(0, sql.lastIndexOf(","));
+		}
+
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("queryList(Class, ConditionDef, Map<String,Object>) - String sql=" + sql); //$NON-NLS-1$
+			if (paramMap != null) {
+				for (String key : paramMap.keySet()) {
+					logger.info("queryList(Class, ConditionDef, Map<String,Object>) - Param " + key + "=" //$NON-NLS-1$
+							+ paramMap.get(key));
+				}
+			}
+		}
+
+		return namedParameterJdbcTemplate.query(sql, paramMap, new DefaultRowMapper(cs));
+	}
+
+	/**
+	 * 查询一条数据
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param conditionDef
+	 *            查询条件定义
+	 * @param map
+	 *            查询参数
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("rawtypes")
+	public Object queryEntity(Class cs, ConditionDef conditionDef, ParamMap map) throws Exception {
+		return queryEntity(cs, conditionDef, map.get());
+	}
+
+	/**
+	 * 查询满足条件的单条记录的实体对象，如果超过1条则抛出异常，没查询到则返回null
+	 *
+	 * @param cs
+	 * @param conditionDef
+	 * @param paramMap
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("rawtypes")
+	public Object queryEntity(Class cs, ConditionDef conditionDef, Map<String, Object> paramMap) throws Exception {
+		Condition condition = new Condition(conditionDef, paramMap);
+		String sql = SQLUtils.buildSelectSql(cs) + condition.getConditionClauseWithWhere();
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("queryEntity(Class, ConditionDef, Map<String,Object>) - String sql=" + sql); //$NON-NLS-1$
+			if (paramMap != null) {
+				for (String key : paramMap.keySet()) {
+					logger.info("queryEntity(Class, ConditionDef, Map<String,Object>) - Param " + key + "=" //$NON-NLS-1$
+							+ paramMap.get(key));
+				}
+			}
+		}
+
+		List<Map<String, Object>> list = this.namedParameterJdbcTemplate.queryForList(sql, paramMap);
+
+		if (null == list || list.size() == 0 || list.size() > 1) {
+			return null;
+		} else if (list.size() > 1) {
+			throw new Exception("query return record more then one!!");
+		} else {
+			Map<String, Object> map = list.get(0);
+			return SQLUtils.coverMapToBean(map, cs);
+		}
+	}
+
+	/**
+	 * 查询行数
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param conditionDef
+	 *            查询条件
+	 * @param paramMap
+	 *            查询条件参数
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("rawtypes")
+	public int queryCount(Class cs, ConditionDef conditionDef, ParamMap paramMap) throws Exception {
+		return queryCount(cs, conditionDef, paramMap.get());
+	}
+
+	/**
+	 * 查询行数
+	 *
+	 * @param cs
+	 *            数据模型
+	 * @param conditionDef
+	 *            查询条件
+	 * @param paramMap
+	 *            条件参数
+	 * @return
+	 * @throws Exception
+	 */
+	@SuppressWarnings("rawtypes")
+	public int queryCount(Class cs, ConditionDef conditionDef, Map<String, Object> paramMap) throws Exception {
+		String where = "";
+		if (conditionDef != null) {
+			Condition condition = new Condition(conditionDef, paramMap);
+			where = condition.getConditionClauseWithWhere();
+		}
+		String sql = SQLUtils.buildSelectCountSql(cs) + where;
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("queryCount(Class, ConditionDef, Map<String,Object>) - String sql=" + sql); //$NON-NLS-1$
+			if (paramMap != null) {
+				for (String key : paramMap.keySet()) {
+					logger.info("queryCount(Class, ConditionDef, Map<String,Object>) - Param " + key + "=" //$NON-NLS-1$
+							+ paramMap.get(key));
+				}
+			}
+		}
+
+		return this.namedParameterJdbcTemplate.queryForObject(sql, paramMap, new RowMapper<Integer>() {
+
+			@Override
+			public Integer mapRow(ResultSet arg0, int arg1) throws SQLException {
+				return arg0.getInt(1);
+			}
+
+		});
+	}
+
+	/**
+	 * 分页查询数据
+	 *
+	 * @param cs
+	 *            数据模型类型
+	 * @param page
+	 *            分页信息
+	 * @param map
+	 *            查询条件参数
+	 * @return
+	 * @throws Exception
+	 */
+	public PageResultForm query(String sql, PageForm page,ParamMap map) throws Exception {
+		if(page.getSort()==null||page.getSort().split(",").length<1||
+				page.getSort().split(",").length!=page.getOrder().split(",").length){
+			throw new Exception("分页查询必须提供排序字段或提供的排序字段不正确!");
+		}
+		String tempTable="("+sql+") _temp";
+		Result tRes=query("select count(*) as total form "+tempTable,map);
+		int total=0;
+		if(tRes.next()){
+			total=tRes.getInt("total");
+		}
+		if(total<1){
+			return new PageResultForm(0,null);
+		}
+		int size=page.getRows()==0?12:page.getRows();
+		int _page=page.getPage();
+		if(_page==0){
+			_page=1;
+		}
+		int count=_page*size;
+		String order="";
+
+		String[]sorts=page.getSort().split(",");
+		String[]orders=page.getOrder().split(",");
+		for(int i=0;i<sorts.length;i++){
+			order+=","+sorts[i]+" "+orders[i];
+		}
+		String rSql="SELECT * FROM("
+					+ "SELECT TOP "+count+" *,ROW_NUMBER() OVER(ORDER BY "+order.substring(1)+" ) _row "
+				+ "FROM "+tempTable+" )result where _row>"+(count-size);
+		Result result=query(rSql,map);
+		return new PageResultForm(total, result);
+	}
+
+	public Result query(String sql,ParamMap map){
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("query(String,ParamMap) - String sql=" + sql); //$NON-NLS-1$
+			if (map != null) {
+				for (String key : map.get().keySet()) {
+					logger.info("query(String,ParamMap) - Param " + key + "=" //$NON-NLS-1$
+							+ map.get().get(key));
+				}
+			}
+		}
+
+		List<Map<String, Object>>list=getNamedParameterJdbcTemplate().queryForList(sql,map.get());
+		Result result=new Result();
+		for(Map<String, Object> item:list){
+			result.add(RowMap.toRowMap(item));
+		}
+		return result;
+	}
+
+	/**
+	 * 获取JDBC模板
+	 *
+	 * @return
+	 */
+	public JdbcTemplate getJdbcTemplate() {
+		return jdbcTemplate;
+	}
+
+	/**
+	 *
+	 * @return
+	 */
+	public NamedParameterJdbcTemplate getNamedParameterJdbcTemplate() {
+		return namedParameterJdbcTemplate;
+	}
+
+	/**
+	 * 导入模板
+	 *
+	 * @param kit
+	 *            Excel操作类
+	 * @param mapper
+	 *            行处理器
+	 * @return
+	 * @throws Exception
+	 */
+
+	@Transactional(rollbackFor = Exception.class)
+	public Object impExcel(ExcelKit kit, SimpleDaoRowMapper mapper) throws Exception {
+		UploadValidateErrorAdapter adapter = new UploadValidateErrorAdapter();
+		kit.onValidateError(adapter).validator();
+
+		UploadMsgForm retMsg = new UploadMsgForm();
+
+		if (adapter.getMsgList().size() > 0) {
+			throw new ExcelImportException(retMsg.setSuccess(false).setErrMsg(adapter.getMsgList()));
+		}
+		List<DefaultForm> list = kit.mapper(mapper);
+		int success = 0;
+		for (DefaultForm def : list) {
+			MsgFrom msg = (MsgFrom) def;
+			if (msg.isSuccess()) {
+				success++;
+			} else {
+				retMsg.addErrMsg(msg.getMessage());
+			}
+		}
+		if (success != list.size()) {
+			throw new ExcelImportException(retMsg);
+		} else {
+			retMsg.setTotal(list.size());
+			retMsg.setSuccess(true);
+			retMsg.setUuid(mapper.getUuid());
+			return retMsg;
+		}
+	}
+
+	@Transactional(rollbackFor = Exception.class)
+	public void rollbackFromLog(String uuid) throws Exception {
+		String ruuid = UUID.randomUUID().toString();
+		List<Object>rollTables=queryOneFieldList("select datatable from t_log where uuid=:uuid group by datatable", new ParamMap().put("uuid", uuid));
+		List<LogForm>logs=new ArrayList<LogForm>();
+		for(Object table:rollTables){
+			// 查询日志信息
+			String sql = "delete from " + table + " where uuid in (select datauuid from T_Log where uuid=:uuid and datatable='"+table+"')";
+			this.namedParameterJdbcTemplate.update(sql, new ParamMap().put("uuid", uuid).get());//>0;
+		}
+		List<DefaultForm>list= queryList(LogForm.class, new ConditionDef(new Object[][]{
+			{"uuid=:uuid"}
+		}), new ParamMap().put("uuid", uuid));
+		for(DefaultForm def:list){
+			LogForm log=(LogForm)def;
+			log.setUuid(ruuid);
+			log.setDataOperation(Res.LOG.OPERATION_ROLLBACK);
+			logs.add(log);
+		}
+		saveLogs(logs);
+	}
+
+	public boolean saveLogs(List<LogForm> beans) {
+
+		String sql = SQLUtils.buildInsertSql(LogForm.class);
+
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("save(Object) - String sql=" + sql); //$NON-NLS-1$
+		}
+		List<SqlParameterSource>spList=new ArrayList<SqlParameterSource>();
+		for(LogForm log:beans){
+			spList.add(new BeanPropertySqlParameterSource(log));
+			if (isPrintSql() && logger.isInfoEnabled()) {
+				logger.info("save(Object) - String param=" + log); //$NON-NLS-1$
+			}
+		}
+		this.namedParameterJdbcTemplate.batchUpdate(sql,spList.toArray(new SqlParameterSource[0]));
+		return true;
+	}
+
+	public boolean saveLog(LogForm bean) {
+		String sql = SQLUtils.buildInsertSql(bean.getClass());
+		if (isPrintSql() && logger.isInfoEnabled()) {
+			logger.info("save(Object) - String sql=" + sql); //$NON-NLS-1$
+			logger.info("save(Object) - Param obj=" + bean.toString()); //$NON-NLS-1$
+		}
+		SqlParameterSource sps = new BeanPropertySqlParameterSource(bean);
+		boolean success = this.namedParameterJdbcTemplate.update(sql, sps) > 0;
+		if (!success) {
+			System.out.println("日志保存失败!:" + bean);
+		}
+		return success;
+	}
+	@Transactional(rollbackFor = Exception.class)
+	public boolean batchUpdate(String sql,List<DefaultForm>list,String operation){
+		Class<?> fClass=list.get(0).getClass();
+		FieldInfo pk = SQLUtils.getPK(fClass);
+		try {
+			int cur=0;
+			int max=2100;
+			String uuid=UUID.randomUUID().toString();
+			while(cur<list.size()){
+				int to=(cur+max>list.size()?list.size():cur+max);
+				List<DefaultForm>subList= list.subList(cur,to);
+				ParamMap map=new ParamMap().put("id",SQLUtils.getFieldValues(pk,subList).toArray());
+				List<DefaultForm>beansForLog;
+				if(!(Res.LOG.OPERATION_INSERT.equalsIgnoreCase(operation))){
+					beansForLog= queryList(fClass,new ConditionDef(new Object[][]{
+						{SQLUtils.loadTableName(fClass) + "." + pk.getDbFieldName() + " in(:id)" }
+					}),map);
+				}else{
+					beansForLog=list;
+				}
+				if (isPrintSql() && logger.isInfoEnabled()) {
+					logger.info("batchUpdate(String,List<DefaultForm>,boolean) - String sql=" + sql); //$NON-NLS-1$
+					if (map != null) {
+						for (String key : map.get().keySet()) {
+							logger.info("batchUpdate(String,List<DefaultForm>,boolean) - Param " + key + "="
+									+ map.get().get(key));
+						}
+					}
+				}
+				List<SqlParameterSource>spList=new ArrayList<SqlParameterSource>();
+				List<LogForm>logs=new ArrayList<>();
+				for(int i=0;i<subList.size();i++){
+					DefaultForm now=subList.get(i);
+					spList.add(new BeanPropertySqlParameterSource(now));
+					DefaultForm bean=beansForLog.get(i);
+					LogForm log=LogForm.newLog();
+					log.setUuid(uuid);
+					String msg="";
+					if(Res.LOG.OPERATION_UPDATE.equalsIgnoreCase(operation)){
+						msg=UpdateInfo.newUpdate(bean, now).toString();
+					}else{
+						msg=bean.toString();
+					}
+					logs.add(log.setDataOperation(operation).setDataTable(SQLUtils.loadTableName(bean.getClass()))
+							.setDataUUID(bean.getUuid()).setLogMsg(msg));
+				}
+				int[]x=this.namedParameterJdbcTemplate.batchUpdate(sql,spList.toArray(new SqlParameterSource[0]));
+				for(int r:x){
+					if(r!=Statement.SUCCESS_NO_INFO&&r<1){
+						throw new Exception("批处理过程中出现异常结果,回滚当前事务!");
+					}
+				};
+				saveLogs(logs);
+				cur=to;
+			}
+			return true;
+		} catch (Exception e) {
+			e.printStackTrace();
+			return false;
+		}
+
+	}
+
+}

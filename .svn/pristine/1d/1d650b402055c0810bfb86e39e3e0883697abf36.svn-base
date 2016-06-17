@@ -1,0 +1,15 @@
+eclipse.preferences.version=1
+encoding//WebContent/Scripts=UTF-8
+encoding//WebContent/Scripts/jquery-easyui-1.4.1/plugins/jquery.loading.js=UTF-8
+encoding//WebContent/Scripts/js=UTF-8
+encoding//WebContent/Scripts/js/AppInter.js=UTF-8
+encoding//WebContent/Scripts/js/Application.js=UTF-8
+encoding//WebContent/Scripts/js/InterInvoke.js=UTF-8
+encoding//WebContent/login.html=UTF-8
+encoding//src/com/gwamcc/aii/dao/impl/AttachmentDaoImpl.java=UTF-8
+encoding//src/com/gwamcc/aii/dao/impl/DictDaoImpl.java=UTF-8
+encoding//src/com/gwamcc/aii/dao/impl/LoginUserDaoImpl.java=UTF-8
+encoding//src/com/gwamcc/aii/dao/impl/RoleDaoImpl.java=UTF-8
+encoding//src/com/gwamcc/aii/dao/impl/RoleRightDaoImpl.java=UTF-8
+encoding//src/com/gwamcc/aii/dao/impl/RoleUserDaoImpl.java=UTF-8
+encoding/<project>=UTF-8

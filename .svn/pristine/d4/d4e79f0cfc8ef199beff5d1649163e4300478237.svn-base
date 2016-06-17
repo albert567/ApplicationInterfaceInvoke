@@ -1,0 +1,134 @@
+package com.gwamcc.aii.forms;
+
+import com.gwamcc.aii.util.form.anno.QueryForm;
+import com.gwamcc.aii.util.form.anno.Title;
+import com.gwamcc.aii.util.sql2.anno.Field;
+import com.gwamcc.aii.util.sql2.anno.Left;
+import com.gwamcc.aii.util.sql2.anno.NoInsert;
+import com.gwamcc.aii.util.sql2.anno.NoQuery;
+import com.gwamcc.aii.util.sql2.anno.NoUpdate;
+import com.gwamcc.aii.util.sql2.anno.PK;
+import com.gwamcc.aii.util.sql2.anno.Table;
+
+/**
+ * 存储过程参数列表
+ * @author 张亚平
+ *
+ */
+@Table("T_ObjParam")
+@QueryForm(title="存储过程参数")
+public class ProcedureParamForm extends DefaultForm{
+	@PK
+	@NoUpdate
+	@NoInsert
+	@Field("ID")
+	private int id;//参数ID
+
+	@Field("Name")
+	@Title("参数名称")
+	private String name;//参数名称
+	@Field("Description")
+	@Title("参数描述")
+	private String description;//参数描述
+	@Field("ObjID")
+	@Left(table="T_DataBaseObj",on="id",fields={"ObjName"})
+	private int objID;//对象ID
+	@NoInsert
+	@NoUpdate
+	@Field("T_DataBaseObj.ObjName")
+	@Title("对象名称")
+	private String objName;//对象名称
+	@Field("TypeID")
+	@Left(table="T_Dict",on="DKey",fields={"DValue"})
+	private String typeID;//参数类型ID
+	@NoInsert
+	@NoUpdate
+	@Field("T_Dict.DValue")
+	@Title("参数类型")
+	private String typeName;//参数类型名称
+	@Field("Length")
+	@Title("参数长度")
+	private int length;//参数长度
+	@Field("IsValid")
+	private String isValid;//是否有效
+	@Field("InOrOut")
+	@Title(value="出参入参",formatter="function(val){return val==0?'入参':(val==1?'出参':'出参入参')}")
+	private String inOrOut;//0入参/1出参/2既出参又入参
+	@NoInsert
+	@NoQuery
+	@NoUpdate
+	private String dbName;
+	private int sID;
+	public int getId() {
+		return id;
+	}
+	public void setId(int id) {
+		this.id = id;
+	}
+	public String getName() {
+		return name;
+	}
+	public void setName(String name) {
+		this.name = name;
+	}
+	public String getDescription() {
+		return description;
+	}
+	public void setDescription(String description) {
+		this.description = description;
+	}
+	public int getObjID() {
+		return objID;
+	}
+	public void setObjID(int objID) {
+		this.objID = objID;
+	}
+	public String getObjName() {
+		return objName;
+	}
+	public void setObjName(String objName) {
+		this.objName = objName;
+	}
+	public String getTypeID() {
+		return typeID;
+	}
+	public void setTypeID(String typeID) {
+		this.typeID = typeID;
+	}
+	public String getTypeName() {
+		return typeName;
+	}
+	public void setTypeName(String typeName) {
+		this.typeName = typeName;
+	}
+	public int getLength() {
+		return length;
+	}
+	public void setLength(int length) {
+		this.length = length;
+	}
+	public String getIsValid() {
+		return isValid;
+	}
+	public void setIsValid(String isValid) {
+		this.isValid = isValid;
+	}
+	public String getInOrOut() {
+		return inOrOut;
+	}
+	public void setInOrOut(String inOrOut) {
+		this.inOrOut = inOrOut;
+	}
+	public String getDbName() {
+		return dbName;
+	}
+	public void setDbName(String dbName) {
+		this.dbName = dbName;
+	}
+	public int getSID() {
+		return sID;
+	}
+	public void setSID(int sID) {
+		this.sID = sID;
+	}
+}

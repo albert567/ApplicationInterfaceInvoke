@@ -1,0 +1,70 @@
+package com.gwamcc.aii.service.impl;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gwamcc.aii.dao.AppDbDao;
+import com.gwamcc.aii.forms.AppDbForm;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.PageDataForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.service.AppDbService;
+/**
+ * 应用数据库关联服务实现类
+ * @author 张亚平
+ *
+ */
+@Service
+@CacheConfig(cacheNames="T_AppDataBase")
+public class AppDbServiceImpl implements AppDbService {
+	@Autowired
+    private AppDbDao dao;
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm edit(AppDbForm app)  throws Exception {
+		return dao.edit(app);
+	}
+
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm append(AppDbForm app) throws Exception {
+		return dao.append(app);
+	}
+
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm remove(AppDbForm form)  throws Exception {
+		return dao.remove(form);
+	}
+
+
+	@Override
+	@Cacheable(key="#form.toString()+#page.toString()")
+	public PageDataForm getList(AppDbForm form, PageForm page) throws Exception {
+		return dao.getList(form,page);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public Object upload(MultipartFile file) throws Exception {
+		return dao.upload(file);
+	}
+
+
+	@Override
+	public Object download() throws Exception {
+		return dao.download();
+	}
+
+
+
+
+}

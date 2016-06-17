@@ -1,0 +1,47 @@
+package com.gwamcc.aii.service.impl;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gwamcc.aii.dao.AttachmentReleaseDao;
+import com.gwamcc.aii.forms.AttachmentReleaseForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.service.AttachmentReleaseService;
+
+@Service
+@CacheConfig(cacheNames="T_Attachment_Release")
+public class AttachmentReleaseServiceImpl implements AttachmentReleaseService {
+
+	@Autowired
+	private AttachmentReleaseDao dao;
+
+
+	@Override
+	//@Cacheable(key="#attachment+#page.toString()")
+	public Object list(String attachment, PageForm page) throws Exception {
+		return dao.list(attachment,page);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public Object remove(AttachmentReleaseForm bean) throws Exception {
+		return dao.remove(bean);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public Object upload(int attachmentId, MultipartFile[] files) throws Exception {
+		return dao.upload(attachmentId,files);
+	}
+
+	@Override
+	@Cacheable(key="#uuids")
+	public Object download(String[]uuids) throws Exception {
+		return dao.download(uuids);
+	}
+
+}

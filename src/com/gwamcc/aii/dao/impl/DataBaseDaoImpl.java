@@ -1,0 +1,195 @@
+package com.gwamcc.aii.dao.impl;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.List;
+
+import org.apache.commons.lang3.StringUtils;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gwamcc.aii.dao.DataBaseDao;
+import com.gwamcc.aii.dao.core.DefaultDao;
+import com.gwamcc.aii.dao.core.SimpleDaoRowMapper;
+import com.gwamcc.aii.dao.mapper.ForceRowMapper;
+import com.gwamcc.aii.forms.DataBaseForm;
+import com.gwamcc.aii.forms.DbNameForm;
+import com.gwamcc.aii.forms.DbObjForm;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.ForceAdjDataForm;
+import com.gwamcc.aii.forms.ForceAdjForm;
+import com.gwamcc.aii.forms.ForceNodeDataForm;
+import com.gwamcc.aii.forms.ForceNodeForm;
+import com.gwamcc.aii.forms.ForceRowArgForm;
+import com.gwamcc.aii.forms.MsgFrom;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.util.ExcelKit;
+import com.gwamcc.aii.util.excel.RowValidatorList;
+import com.gwamcc.aii.util.sql2.ConditionDefBuilder;
+import com.gwamcc.aii.util.sql2.ParamMap;
+import com.gwamcc.aii.util.template.anno.Template;
+
+@Repository
+@Template(key="DataBase.xlsx",value="A000_数据库模板.xlsx")
+public class DataBaseDaoImpl extends DefaultDao implements DataBaseDao{
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@Override
+	public List<DefaultForm> getDb() {
+		return queryList(DbNameForm.class,new String[]{"Name"},
+				new ConditionDefBuilder().param("IsValid=:IsValid").define(),
+				new ParamMap().put("IsValid", 1));
+	}
+
+	@Override
+	public Object getDbList(DataBaseForm db, PageForm page) {
+		try {
+			ConditionDefBuilder builder=new ConditionDefBuilder();
+			ParamMap map=new ParamMap();
+			if(!StringUtils.isEmpty(db.getName())){
+				builder.param("T_DataBase.name like :name");
+				map.put("name", "%" + db.getName() + "%");
+			}
+			if(!StringUtils.isEmpty(db.getIsValid())){
+				builder.param("T_DataBase.ISVALID=:isValid");
+				map.put("isValid", db.getIsValid());
+			}
+			return queryPage(DataBaseForm.class, page, new String[] { "Name" },builder.define(),map);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return MsgFrom.err("后台处理发生异常!");
+	}
+
+	@Override
+	public DefaultForm append(DataBaseForm db) {
+		if (save(db))
+			return MsgFrom.info("新增成功!");
+		else
+			return MsgFrom.err("新增失败!");
+	}
+
+	@Override
+	public DefaultForm edit(DataBaseForm db) {
+		if (saveUpdate(db)) {
+			return MsgFrom.info("修改成功!");
+		} else
+			return MsgFrom.err("修改失败!");
+	}
+
+	@Override
+	public DefaultForm remove(int dbID) {
+		MsgFrom msg = null;
+		try {
+			if ((msg = hasSubNode(dbID)) != null) {
+				return msg;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return MsgFrom.err("后台执行时发生错误!");
+		}
+		if (delete(new DbNameForm().setId(dbID))) {
+			return MsgFrom.info("删除成功!");
+		} else
+			return MsgFrom.err("删除失败!");
+	}
+
+	/**
+	 * 检测当前数据库是否存在子节点
+	 *
+	 * @param dbID
+	 * @return
+	 * @throws Exception
+	 */
+	private MsgFrom hasSubNode(int dbID) throws Exception {
+		// 判断是否数据库对象
+		int count = queryCount(DbObjForm.class,
+				new ConditionDefBuilder().param("DataBaseID=:dbID").define(),
+				new ParamMap().put("dbID", dbID));
+
+		if (count > 0) {
+			return MsgFrom.err("此数据库已存在数据库对象信息,不能删除!");
+		}
+		
+		// 判断是否存在应用功能
+		String sql = "select count(*) from T_AppDataBase where DataBaseID=?";
+		count = getJdbcTemplate().queryForObject(sql, new Object[] { dbID }, new RowMapper<Integer>() {
+
+			@Override
+			public Integer mapRow(ResultSet rs, int arg1) throws SQLException {
+				return rs.getInt(1);
+			}
+
+		});
+		if (count > 0) {
+			return MsgFrom.err("此数据库已与应用系统关联,不能删除!");
+		}
+		return null;
+	}
+
+	@Override
+	public Object upload(MultipartFile file) throws Exception {
+		return this.impExcel(ExcelKit.load(file, 0).title("NAME","NameEn","description","IsValid")
+				.addValidator(new RowValidatorList(0).unique().required())
+				.addValidator(new RowValidatorList(3).in(0,1))
+				, new SimpleDaoRowMapper(this, DataBaseForm.class));
+	}
+
+	@Override
+	public Object download() throws Exception {
+		return TemplateDaoImpl.download(this.getClass());
+	}
+
+	@Override
+	public List<DefaultForm> getForceData(int dbID) {
+		String sql = "SELECT 8 as Level,A.ID,(A.ObjName+B.DValue) as ObjName"
+				+ " FROM T_DataBaseObj A"
+				+ " LEFT JOIN T_Dict B"
+				+ " ON A.ObjType = B.DKey"
+				+ " WHERE DataBaseID=?";
+		List<DefaultForm> formList = new ArrayList<DefaultForm>();
+		String nodeFromID = "T_DataBase"+dbID;
+		String dbName = getDbName(dbID);
+		dbName += "数据库";
+		//node-data
+		ForceNodeForm dbForm = new ForceNodeForm();
+		ForceNodeDataForm nodeData = new ForceNodeDataForm();
+		nodeData.set$alpha(1).set$color(ForceNodeDaoImpl.dbColor).set$type(ForceNodeDaoImpl.dbType);
+		dbForm.setId(nodeFromID).setName(dbName).setData(nodeData);
+		dbForm.setAdjacencies(new ArrayList<ForceAdjForm>());
+
+		//node-adjacencies-data
+		ForceAdjDataForm adjDataForm = new ForceAdjDataForm();
+		adjDataForm.set$alpha(1).set$color(ForceNodeDaoImpl.color);
+
+		ForceRowArgForm argForm = new ForceRowArgForm();
+		argForm.setNodeID(dbID)
+				.setNodeFromID(nodeFromID)
+				.setParamID("ID")
+				.setParamName("ObjName")
+				.setAdjData(adjDataForm)
+				.setForceNodeDao(new ForceNodeDaoImpl())
+				.setFormList(formList)
+				.setTableName("T_DataBaseObj").setJdbcTemplate(jdbcTemplate);
+
+		List<ForceAdjForm> adjFormList = jdbcTemplate.query(sql,new Object[]{dbID},
+				new ForceRowMapper<ForceAdjForm>(argForm));
+		dbForm.setAdjacencies(adjFormList);
+		formList.add(dbForm);
+		return formList;
+	}
+
+	private String getDbName(int id){
+		List<DefaultForm> formList = queryList(DbNameForm.class, new ConditionDefBuilder().param("id=:ID").define(),
+				new ParamMap().put("ID", id));
+		if(!formList.isEmpty())
+			return ((DbNameForm)(formList.get(0))).getName();
+		return null;
+	}
+
+}

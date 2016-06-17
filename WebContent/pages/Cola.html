@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<title></title>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" charset="UTF-8" />
+<link rel="stylesheet" type="text/css"
+	href="../Scripts/jquery-easyui-1.4.1/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="../Scripts/jquery-easyui-1.4.1/themes/icon.css" />
+<link rel="stylesheet" type="text/css" href="../Styles/Site.css" />
+<style type="text/css">
+@import url(../Styles/style.css);
+@import url(../Styles/font/iconfont.css);
+.background {
+    stroke: gray;
+    stroke-width: 1px;
+    fill: white;
+}
+.node {
+  stroke: #fff;
+  stroke-width: 1.5px;
+}
+
+.spike {
+    fill: url(#SpikeGradient);
+    stroke-width: 0;
+}
+ .label {
+        fill: black;
+        font-family: Verdana;
+        font-size: 10px;
+        text-anchor: middle;
+        cursor: move;
+}
+.undo,.redo{
+	color: gray;
+}
+.datagrid-cell-c1-f,.datagrid-cell-c1-value{
+display: none;
+}
+.datagrid-body td{
+border-width: 0 0 1px 0;
+}
+</style>
+</head>
+<body class="easyui-layout" style="background-color: #fff">
+	<div region="center" id="center">
+		<div id="cola">
+			<div id="msg" style="float: left;position: absolute;color:gray;"></div>
+		</div>
+	</div>
+	<!--1.4 region="east",必须指明宽度-->
+
+	<div region="east" id="list" style="width:200px;" title="详细"
+		class="easyui-propertygrid" data-options="tools:'#tools',
+			textField:'name',valueField:'id',groupField: 'group',toolbar:'#toolbar',
+			showHeader:false,showGroup:true,rownumbers:true,
+			onClickRow:listClick,onDblClickRow:listDblClick,onMouseOverRow:listOver,onMouseOutRow:listOut,onRowContextMenu:listMenu">
+	</div>
+		<!--
+	<div region="east" id="list" style="width:200px;" title="详细"
+		class="easyui-datalist" data-options="tools:'#tools',
+			textField:'name',valueField:'id',groupField: 'group',toolbar:'#toolbar',
+			showHeader:false,showGroup:true,rownumbers:true,
+			onClickRow:listClick,onDblClickRow:listDblClick,onMouseOverRow:listOver,onMouseOutRow:listOut">
+	</div>
+-->
+	<div id='tools'>
+		<span><a href="javascript:void(0)" class="iconfont" style="font-size: 16px;margin-top: -1px;" onclick="javascript:location.reload();">&#xf0055;</a>
+		<!--
+		</span><span><a href="javascript:void(0)" class="undo iconfont" onclick="javascript:listUndo();">&#xe697;</a>
+		</span><span><a href="javascript:void(0)" class="redo iconfont" onclick="javascript:listRedo();">&#xe6ba;</a>
+		-->
+		</span><span><a href="javascript:void(0)" class="iconfont" onclick="javascript:zoomToFit()">&#xe6b9;</a>
+		</span><span><a id='fullS' href="javascript:void(0)" class="iconfont" onclick="javascript:full();">&#xe6b8;</a>
+		</span>
+	</div>
+	<div id='toolbar'>
+		<input class="easyui-searchbox" data-options="prompt:'搜索',searcher:doSearch" style="width:100%"></input>
+	</div>
+	<div style="display:none;">
+		<div id="mm" class="easyui-menu" style="width:120px;z-index: -1"></div>
+	</div>
+</body>
+
+<script src="../Scripts/d3.v3.min.js"></script>
+<script src="../Scripts/fullscreen.js"></script>
+<script src="../Scripts/cola.min.js"></script>
+<script src="../Scripts/js/tmdbgraph.js"></script>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.min.js"></script>
+<script type="text/javascript" src="../Scripts/json2str.js"></script>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="../Scripts/PIE.js"></script>
+<script type="text/javascript" src="../Scripts/Common.js"></script>
+<script type="text/javascript" src="../Scripts/js/util.js"></script>
+<script type="text/javascript" src="../Scripts/js/colaview.js"></script>
+
+</html>

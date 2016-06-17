@@ -1,0 +1,53 @@
+<html>
+<head>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge">
+<meta charset="UTF-8">
+</head>
+<style>
+td a{
+	  font-size: 12px;
+	  text-decoration: none;
+}
+td a:link,td a:VISITED,td a:HOVER,td a:ACTIVE{
+	  color:#09f;
+}
+</style>
+<body>
+<script>
+var i=0;
+</script>
+<table id='tempList' class="easyui-datagrid"
+	data-options="
+					remoteSort: false,
+					singleSelect:false,
+	                url:'../template/list',
+	                loadMsg: '正在加载信息...',
+	                method: 'get',
+   					valueField:'id',
+   					textField:'name',
+	                onLoadError:function (){
+	                     window.location.href='../ErrorPage/AuthorityError.html';
+	                },
+	                onLoadSuccess:function(){
+	               		$('#tempList').datalist('checkAll');
+	               		if(++i<2){
+		               		$('#tempList').datalist('sort',{
+		               			sortName: 'name',
+								sortOrder: 'asc'
+		               		});
+	               		}
+	                }
+	                ">
+
+<thead>
+		<tr>
+		<th data-options="field:'id',checkbox:true"></th>
+		<th data-options="field:'name',fitColumns:true">模板</th>
+		<th data-options="field:'down',fitColumns:true,formatter:function(value,row,index){
+			return '<a class=\'download\' href=\'../template/'+row.id+'\'>下载</a>';
+		}">下载</th>
+		</tr>
+	</thead>
+</table>
+</body>
+</html>

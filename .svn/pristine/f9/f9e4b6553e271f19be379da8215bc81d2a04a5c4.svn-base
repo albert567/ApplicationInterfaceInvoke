@@ -1,0 +1,188 @@
+package com.gwamcc.aii.dao.impl;
+
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gwamcc.aii.dao.ProcedureParamDao;
+import com.gwamcc.aii.dao.core.DaoValueFormatter;
+import com.gwamcc.aii.dao.core.DefaultDao;
+import com.gwamcc.aii.dao.core.SimpleDaoRowMapper;
+import com.gwamcc.aii.forms.DataBaseObjForm;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.DictForm;
+import com.gwamcc.aii.forms.MsgFrom;
+import com.gwamcc.aii.forms.PageDataForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.forms.ProParamNameForm;
+import com.gwamcc.aii.forms.ProcedureParamForm;
+import com.gwamcc.aii.util.ExcelKit;
+import com.gwamcc.aii.util.StrKit;
+import com.gwamcc.aii.util.excel.RowValidatorList;
+import com.gwamcc.aii.util.sql2.ConditionDefBuilder;
+import com.gwamcc.aii.util.sql2.ParamMap;
+import com.gwamcc.aii.util.template.anno.Template;
+
+/**
+ * 存储过程数据操作接口实现类
+ * @author 张亚平
+ *
+ */
+@Repository
+@Template(key="ProcedureParam.xlsx",value="A210_存储过程参数模板.xlsx")
+public class ProcedureParamDaoImpl extends DefaultDao implements ProcedureParamDao {
+
+	@Override
+	public List<DefaultForm> getParamName(int objID) {
+		return queryList(ProParamNameForm.class,new String[]{"Name"},
+				new ConditionDefBuilder().param("ObjID=:objId").define(),
+				new ParamMap().put("objId", objID));
+	}
+
+	@Override
+	public List<DefaultForm> getParamList(int objID) {
+		return queryList(ProcedureParamForm.class,new String[]{"Name"},
+				new ConditionDefBuilder().param("ObjID=:objId").define(),
+				new ParamMap().put("objId", objID));
+	}
+
+	@Override
+	public List<DefaultForm> getParamType() {
+		return queryList(DictForm.class,new String[]{"DValue"},
+				new ConditionDefBuilder().param("DType=:type").define(),
+				new ParamMap().put("type", "11"));
+	}
+
+	@Override
+	public PageDataForm getParamList(ProcedureParamForm proParam, PageForm page) {
+		ConditionDefBuilder cond = new ConditionDefBuilder();
+		ParamMap map = new ParamMap();
+		if(proParam.getObjID()>0){
+			cond.param("ObjID = :objID");
+			map.put("objID", proParam.getObjID());
+		}
+		if(!StrKit.isEmpty(proParam.getName())){
+			cond.param("T_ObjParam.Name like :name");
+			map.put("name", "%" + proParam.getName() + "%");
+		}
+		if(!StrKit.isEmpty(proParam.getTypeName())){
+			cond.param("T_Dict.DValue like :typeName");
+			map.put("typeName", "%"+proParam.getTypeName()+"%");
+		}
+		if (!StrKit.isEmpty(proParam.getInOrOut())) {
+			cond.param("T_ObjParam.InOrOut=:inOrOut");
+			map.put("inOrOut", proParam.getInOrOut());
+		}
+		if (!StrKit.isEmpty(proParam.getIsValid())) {
+			cond.param("T_ObjParam.ISVALID=:isValid");
+			map.put("isValid", proParam.getIsValid());
+		}
+
+		if (!StrKit.isEmpty(proParam.getDescription())) {
+			cond.param(
+					"T_ObjParam.Name like :desc or T_ObjParam.Description like :desc");
+			map.put("desc", "%" + proParam.getDescription() + "%");
+		}
+
+		try {
+			return queryPage(ProcedureParamForm.class, page, new String[] { "Sn","Name" }, cond.define(), map);
+		} catch (Exception e) {
+			e.printStackTrace();
+			return null;
+		}
+	}
+
+	@Override
+	public DefaultForm edit(ProcedureParamForm proParam) {
+		if (saveUpdate(proParam)) {
+			return MsgFrom.info("修改成功!");
+		} else {
+			return MsgFrom.err("修改失败!");
+		}
+	}
+
+	@Override
+	public DefaultForm append(ProcedureParamForm proParam) {
+		if (save(proParam)) {
+			return MsgFrom.info("新增成功!");
+		} else{
+			return MsgFrom.err("新增失败!");
+		}
+	}
+
+	@Override
+	public DefaultForm remove(int paramID) {
+		if (delete(new ProParamNameForm().setId(paramID))) {
+			return MsgFrom.info("删除成功!");
+		} else {
+			return MsgFrom.err("删除失败!");
+		}
+	}
+
+	@Override
+	public Object upload(MultipartFile file) throws Exception {
+		return this.impExcel(ExcelKit.load(file, 0).title("DbName","ObjID","Name","TypeID",
+				"Length","InOrOut","Description","IsValid","Sn")
+				.addFormatter(1, new DaoValueFormatter(this) {
+
+					private Map<String, Integer>idMap;
+
+					@Override
+					public Object format(Object value) {
+						String key = (getCellValue(0)+"."+value).toUpperCase();
+						return getIdMap().get(key);
+					}
+					private Map<String, Integer>getIdMap(){
+						if(idMap==null){
+							idMap=new HashMap<String,Integer>();
+							List<DefaultForm>list =getDao().queryList(DataBaseObjForm.class);
+							for(DefaultForm form:list){
+								if (form instanceof DataBaseObjForm) {
+									DataBaseObjForm obj = (DataBaseObjForm) form;
+									String key = (obj.getDbName()+"."+obj.getObjName()).toUpperCase();
+									idMap.put(key,obj.getObjID());
+								}
+
+							}
+						}
+						return idMap;
+					}
+				})
+				.addValidator(new RowValidatorList(0,1,2).unique())
+				.addFormatter(3, new DaoValueFormatter(this) {
+
+					private Map<String, String>idMap;
+
+					@Override
+					public Object format(Object value) {
+						return getIdMap().get(value);
+					}
+					private Map<String, String>getIdMap(){
+						if(idMap==null){
+							idMap=new HashMap<String,String>();
+							List<DefaultForm>list =getDao().queryList(DictForm.class);
+							for(DefaultForm form:list){
+								if (form instanceof DictForm) {
+									DictForm dict = (DictForm) form;
+									if("10".equals(dict.getDtype())||"11".equals(dict.getDtype())||"12".equals(dict.getDtype()))
+										idMap.put(dict.getDvalue(), dict.getDkey());
+								}
+
+							}
+						}
+						return idMap;
+					}
+				})
+				.addValidator(new RowValidatorList(5).in(0,1,2))
+				.addValidator(new RowValidatorList(7).in(0,1))
+				, new SimpleDaoRowMapper(this, ProcedureParamForm.class));
+	}
+
+	@Override
+	public Object download() throws Exception {
+		return TemplateDaoImpl.download(this.getClass());
+	}
+}

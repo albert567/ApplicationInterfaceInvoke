@@ -1,0 +1,76 @@
+package com.gwamcc.aii.service.impl;
+
+import java.util.List;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.cache.annotation.CacheConfig;
+import org.springframework.cache.annotation.CacheEvict;
+import org.springframework.cache.annotation.Cacheable;
+import org.springframework.stereotype.Service;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gwamcc.aii.dao.DataBaseDao;
+import com.gwamcc.aii.forms.DataBaseForm;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.service.DataBaseService;
+
+/**
+ * 数据库服务实现类
+ * @author 张亚平
+ *
+ */
+@Service
+@CacheConfig(cacheNames="T_DataBase")
+public class DataBaseServiceImpl implements DataBaseService{
+	@Autowired
+    private DataBaseDao dao;
+
+	@Override
+	@Cacheable(key="#root.methodName")
+	public List<DefaultForm> getDb() {
+		return dao.getDb();
+	}
+
+	@Override
+	@Cacheable(key="#db.toString()+#page.toString()")
+	public Object getDbList(DataBaseForm db, PageForm page) {
+		return dao.getDbList(db, page);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm append(DataBaseForm db) {
+		return dao.append(db);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm edit(DataBaseForm db) {
+		return dao.edit(db);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public DefaultForm remove(int dbID) {
+		return dao.remove(dbID);
+	}
+
+	@Override
+	@CacheEvict(allEntries=true)
+	public Object upload(MultipartFile file) throws Exception {
+		return dao.upload(file);
+	}
+
+	@Override
+	public Object download() throws Exception {
+		return dao.download();
+	}
+
+	@Override
+	@Cacheable(key="#dbID")
+	public List<DefaultForm> getForceData(int dbID) {
+		return dao.getForceData(dbID);
+	}
+
+}

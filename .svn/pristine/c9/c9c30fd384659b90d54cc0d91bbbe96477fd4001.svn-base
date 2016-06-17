@@ -1,0 +1,308 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>应用接口方法</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" charset="UTF-8" />
+    <link rel="stylesheet" type="text/css" href="../Scripts/jquery-easyui-1.4.1/themes/default/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="../Scripts/jquery-easyui-1.4.1/themes/icon.css" />
+    <link rel="stylesheet" type="text/css" href="../Styles/Site.css" />
+    <style type="text/css">
+        table.sample {
+	        border-width: 0px;
+	        border-spacing: 0px;
+	        border-style: hidden;
+        }
+        table.sample th {
+	        border-width: 0px;
+	        padding: 1px;
+	        border-style: hidden;
+        }
+        table.sample td {
+	        border-width: 0px;
+	        padding: 1px;
+	        border-style: hidden;
+        }
+    </style>
+</head>
+
+<style>
+td{padding: 5px;}
+</style>
+<body style=" margin:0; padding:0;">
+<div id="pouter" class="easyui-panel" align="center"
+        style="width:100%;background:#EEF3FA; min-width:1000px;">
+    <div style="height:65px" align="left">
+   		<fieldset style=" padding:5px; margin:6px 6px 0px 6px; color:#000000;border:#999999 solid 1px; ">
+   			<legend>基本信息</legend>
+   			<table class="sample">
+   				 <tr style="height:35px;">
+			         <td style="width:60px;" align="right">
+						<label for="name">应用名称:</label>
+					</td>
+			        <td>
+			         <input id="txtAppName" style='width: 153px;' class="easyui-textbox"  data-options="readonly:true"/>
+			        </td>
+			        <td style="width:100px;" align="right">
+						<label for="name">接口名称:</label>
+					</td>
+			        <td>
+			         <input id="txtInterName" style='width: 153px;' class="easyui-textbox"  data-options="readonly:true"/>
+			        </td>
+			        <td style="width:100px;" align="right">
+						<label for="name">接口类型:</label>
+					</td>
+			        <td>
+			         <input id="txtInterType" style='width: 153px;' class="easyui-textbox"  data-options="readonly:true"/>
+			        </td>
+			        <td style="width:100px;" align="right">
+						<label for="name">接口描述:</label>
+					</td>
+			        <td>
+			         <input id="txtInterDesc" style='width: 200px;' class="easyui-textbox"  data-options="readonly:true"/>
+			        </td>
+			     </tr>
+   			</table>
+   		</fieldset>
+   </div>
+   <div style="height:65px;"align="left">
+  <fieldset style=" padding:5px; margin:6px 6px 0px 6px; color:#000000;border:#999999 solid 1px; " >
+   <legend style="" >查询信息</legend>
+        <table class="sample">
+         <tr style="height:35px;">
+         <td style="width:60px;display:none" align="right">
+		<label for="name">应用名称:</label>
+        </td>
+        <td style="display:none">
+         <input id="cmbApp" style='width: 153px;' class="easyui-combobox"  data-options="
+         								readonly:true,
+                                        valueField: 'id',
+                                        textField: 'name',
+                                        hasDownArrow:true,
+                                        onSelect:getInterface,
+                                        onLoadSuccess:function(){
+	                                        if(!Util.empty(Util.param('appId'))){
+	                                        	$(this).combobox('select',Util.param('appId'));
+                                        	}else{
+                                        		findInfo();
+                                        	}
+                                        	$('#cmbApp2').combobox('loadData',$(this).combobox('getData'));
+                                        }
+                             " url='../application/getApp'/>
+        </td>
+        <td style="width:100px;display:none" align="right">
+        <label for="name">接口名称:</label>
+        </td>
+        <td style="display:none">
+        <input id="cmbInterface" style='width: 153px;' class="easyui-combobox"  data-options="
+        								readonly:true,
+                                        valueField: 'id',
+                                        textField: 'name',
+                                        hasDownArrow:true,
+                                        onSelect:getMethod,
+                                        onLoadSuccess:function(){
+                                        	if(!Util.empty(Util.param('interId'))&&Util.param('appId')==$('#cmbApp').combobox('getValue')){
+                                        		$(this).combobox('select',Util.param('interId'));
+                                        	}
+                                        	Util.loadOn(findInfo,1);
+                                        }
+                             "/>
+        </td>
+        <td style="width:100px;display:none" align="right">
+        <label for="name">接口类型:</label>
+        </td>
+        <td style="display:none">
+        <input id="cmbInterfaceType" style='width: 153px;' class="easyui-combobox"  data-options="
+                                         valueField: 'id',
+                                        textField: 'name',
+                                        hasDownArrow:true,
+                                        onLoadSuccess:function(){
+                                        	$('#cmbInterfaceType2').combobox('loadData',$(this).combobox('getData'));
+                                       }
+                             "  url= '../appInter/GetInterType'/>
+        </td>
+        <td style="width:60px;" align="right">
+        <label for="name" >方法名称:</label>
+        </td>
+        <td>
+         <input id="cmbMethod" style='width: 153px;' class="easyui-combobox" data-options="
+                                valueField: 'id',
+                                textField: 'name'
+                "/>
+        </td>
+        <td style="width:100px;" align="right">
+        <label for="name">方法类型:</label>
+        </td>
+        <td>
+        <input id="cmbMethodType" style='width: 153px;' class="easyui-combobox"  data-options="
+                                         valueField: 'id',
+                                        textField: 'name',
+                                        hasDownArrow:true,
+                             			onLoadSuccess:function(){
+                                        	$('#cmbMethodType2').combobox('loadData',$(this).combobox('getData'));
+                                       }
+                             "  url= '../method/getMethodType'/>
+        </td>
+        <td style="width:100px;" align="right">
+        <label for="name">方法状态:</label>
+        </td>
+        <td>
+        <input id="cmbIsValid" style='width: 153px;' class="easyui-combobox"  data-options="
+                                        valueField: 'IsValid',
+                                        textField: 'Text',
+                                       panelHeight:'auto'
+                             "/>
+        </td>
+        <td style="width:100px;" align="right">
+         <label for="name">关键词查询:</label>
+        </td>
+        <td>
+        <input class="easyui-textbox" style='width: 153px;' prompt='请输入关键词查询' id="txtKeyWords" />
+        </td>
+        <td style="width:80px;" align="right"><a id="btn" href="javascript:void(0)" class="easyui-linkbutton" style=" margin-left:20px;" data-options="iconCls:'icon-search',plain:false" onclick="findInfo()">搜索</a></td>
+        </tr>
+        </table>
+     </fieldset>
+   </div>
+   <div id="tb" style="height:35px;background-color:White;"align="left" >
+
+    </div>
+    <table id="dg" title="应用接口方法" style="width:99%;min-height:530px;"
+			data-options="
+				singleSelect: true,
+                noheader:true,
+                toolbar:'#tb',
+                pagination:true,
+                pageSize : 12,
+                pageList: [12, 24, 36],
+                loadMsg: '正在加载信息...',
+                method: 'post',
+                rownumbers:true,
+                fitColumns:true,
+                onLoadError:function (){
+
+                }
+                ">
+		<thead>
+			<tr>
+                <th  data-options="field:'appID',width:100,fitColumns:true,hidden:true">应用ID</th>
+				<th data-options="field:'appName',width:80,fitColumns:true,hidden:true,
+                                                       formatter:appFormatter">应用名称</th>
+                <th  data-options="field:'interID',width:100,fitColumns:true,hidden:true">接口ID</th>
+                <th data-options="field:'interName',width:80,fitColumns:true,hidden:true,
+                                                       formatter:interFormatter">接口名称</th>
+                <th  data-options="field:'interfaceTypeID',width:60,fitColumns:true,hidden:true">接口类型ID</th>
+                <th  data-options="field:'interfaceTypeName',width:60,fitColumns:true,hidden:true">接口类型</th>
+                <th  data-options="field:'methodID',width:100,fitColumns:true,hidden:true">方法ID</th>
+                <th data-options="field:'methodName',width:80,fitColumns:true,
+                                                       formatter:meFormatter">方法名称</th>
+                <th data-options="field:'description',width:100,fitColumns:true">方法描述</th>
+                <th  data-options="field:'methodTypeName',width:50,fitColumns:true">方法类型</th>
+                <th  data-options="field:'methodTypeID',width:60,fitColumns:true,hidden:true">方法类型ID</th>
+                <th data-options="field:'isValid',width:30,fitColumns:true,formatter:forIsValid">状态</th>
+                <th data-options="field:'createDate',width:80,fitColumns:true,hidden:true">创建时间</th>
+                 <th data-options="field:'rw',width:30,fitColumns:true,hidden:true">读写</th>
+                 <th data-options="field:'do',width:140,fitColumns:true,formatter:operator">操作</th>
+			</tr>
+		</thead>
+	</table>
+</div>
+<div style="display: none;">
+<div id="imp" class="easyui-dialog" title="导入数据"
+		data-options="modal:true,closed:true,iconCls:'icon-page_excel'"
+		style="width: 300px; height: 150px; padding: 10px;">
+		<div class="easyui-layout" data-options="fit:true">
+			<div data-options="region:'center'" style="padding: 10px;">
+			<form id="impForm" class="easyui-form" method="post" enctype="multipart/form-data">
+				<input class="easyui-filebox" buttonText="选择文件" name="file" editable="true" data-options="required:true,width:230"></input>
+			</form>
+			</div>
+			<div data-options="region:'south',border:false"
+				style="text-align: right;height:34px; padding: 5px 0 0;">
+				<a class="easyui-linkbutton" data-options="iconCls:'icon-download'"
+					href="../method/DownloadTemp" target="_blank"
+					style="width: 80px">下载模板</a>
+				<a class="easyui-linkbutton" data-options="iconCls:'icon-page_excel'"
+					href="javascript:void(0)" onclick="javascript:subImp()"
+					style="width: 80px">导入</a> <a class="easyui-linkbutton"
+					data-options="iconCls:'icon-cancel'" href="javascript:void(0)"
+					onclick="javascript:cancelImp()" style="width: 80px">取消</a>
+			</div>
+		</div>
+	</div>
+<div id="edit" class="easyui-dialog" title=""
+		data-options="modal:true,closed:true,iconCls:'icon-save'"
+		style="width: 500px; height: 380px; padding: 10px;">
+		<div class="easyui-layout" data-options="fit:true">
+			<div data-options="region:'center'" style="padding: 10px;">
+				<form id="editForm" class="easyui-form" method="post" data-options="novalidate:true">
+			    	<table style="margin: 0 auto">
+			    		<tr style="display: none;">
+			    			<td><input class="easyui-textbox" type="hidden" id="editId" name="methodID" data-options="required:false,width:160,valueField:'methodID',value:'-1'"></input></td>
+			    		</tr>
+			    		<tr>
+			    			<td>方法名称:</td>
+			    			<td><input class="easyui-textbox" type="text" name="methodName" data-options="required:true,width:160,valueField: 'methodName'"></input></td>
+			    		</tr>
+			    		<tr>
+			    			<td>所属应用:</td>
+			    			<td><input class="easyui-combobox" type="text" id="cmbApp2" name="appID" editable="true" data-options="required:true,width:160,valueField: 'id',textField: 'name',onSelect:getEditInterface" ></input></td>
+			    		</tr>
+			    		<tr>
+			    			<td>所属接口:</td>
+			    			<td><input class="easyui-combobox" id="cmbInterface2" type="text" name="interID" editable="true" data-options="required:true,width:160,valueField: 'id',textField: 'name'"></input></td>
+			    		</tr>
+			    		<tr>
+			    			<td>方法类型:</td>
+			    			<td><input class="easyui-combobox" id="cmbMethodType2" type="text" name="methodTypeID" editable="false" data-options="required:true,width:160,valueField: 'id',textField: 'name'"></input></td>
+			    		</tr>
+			    		<tr>
+			    			<td>读写:</td>
+			    			<td><input class="easyui-combobox" name="rw" id="cmbRw" editable="false" data-options="required:true,width:60,valueField: 'Rw',textField: 'Text'"></input></td>
+			    		</tr>
+			    		<tr>
+			    			<td>状态:</td>
+			    			<td><input class="easyui-combobox" name="isValid" id="cmbIsValid2" editable="false" data-options="required:true,width:60,valueField: 'IsValid',textField: 'Text'"></input></td>
+			    		</tr>
+			    		<tr>
+			    			<td>方法描述:</td>
+			    			<td><input class="easyui-textbox" type="text" name="description" data-options="width:160,valueField: 'description'" multiline="true" style="height: 60px;"></input></td>
+			    		</tr>
+			    	</table>
+			    </form>
+			</div>
+			<div data-options="region:'south',border:false"
+				style="text-align: right;height:34px; padding: 5px 0 0;">
+				<a class="easyui-linkbutton" data-options="iconCls:'icon-ok'"
+					href="javascript:void(0)" onclick="javascript:submitEdit()"
+					style="width: 80px">保存</a> <a class="easyui-linkbutton"
+					data-options="iconCls:'icon-cancel'" href="javascript:void(0)"
+					onclick="javascript:cancelEdit()" style="width: 80px">取消</a>
+			</div>
+		</div>
+	</div>
+</div>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.min.js"></script>
+<script type="text/javascript" src="../Scripts/json2str.js"></script>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+<script type="text/javascript" src="../Scripts/PIE.js"></script>
+<script type="text/javascript" src="../Scripts/Common.js"></script>
+<script type="text/javascript">
+        $(function () {
+            if (window.PIE) {
+                $('.rounded').each(function () {
+                    PIE.attach(this);
+                });
+            }
+            $('#dg').datagrid({
+                rowStyler: function (index, row) {
+                    return 'font-size:18pt;';
+                }
+            });
+        });
+</script>
+<script type="text/javascript" src="../Scripts/js/util.js"></script>
+<script type="text/javascript" src="../Scripts/js/InterMethod.js"></script>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/plugins/jquery.loading.js"></script>
+</body>
+</html>

@@ -1,0 +1,99 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge">
+    <meta charset="UTF-8">
+	<meta name="viewport" content="width=device-width, initial-scale=1" />
+    <title></title>
+    <link type="text/css" rel="stylesheet" href="../Scripts/jquery-easyui-1.4.1/themes/metro/easyui.css"/>
+    <link type="text/css" rel="stylesheet" href="../Scripts/jquery-easyui-1.4.1/themes/icon.css"/>
+    <link href="../Scripts/jquery-easyui-1.4.1/themes/IconExtension.css" rel="stylesheet" type="text/css" />
+
+    <!--link type="text/css" rel="stylesheet" href="../Styles/jquery.mCustomScrollbar.min.css"/-->
+	<!--[if lt IE 9]>
+	<script src="../Scripts/html5.min.js"></script>
+	<script src="../Scripts/css3-mediaqueries.js"></script>
+	<![endif]-->
+	 <style type="text/css">
+    .main-frame
+    {
+        margin: 0;
+        padding: 0;
+        border: 0;
+        min-width: 980px;
+        height: 608px;
+        width: 100%;
+    }
+    .accordion-header
+    {
+        height: 28px;
+    }
+    .accordion-header > .panel-title
+    {
+        padding: 6px 0 0 20px;
+    }
+    .accordion .accordion-header-selected
+    {
+        background: #fff;
+    }
+    .tree-node-selected
+    {
+        background: #e2e2e2;
+    }
+    .tree-node
+    {
+        padding: 6px 0 0;
+        height: 28px;
+    }
+    iframe{
+    	border:none;
+    }
+    .searchbox,.searchbox input{
+    	background-color: transparent;
+    	border-radius:10px;
+    }
+    .pageBar a{
+    	  font-size: 12px;
+    	  text-decoration: none;
+    }
+    .pageBar a:link,.pageBar a:VISITED,.pageBar a:HOVER,.pageBar a:ACTIVE{
+    	  color:#eee;
+    }
+    </style>
+
+</head>
+<body class="easyui-layout">
+    <div data-options="region:'north',title:'North Title',split:true,noheader:true" style="height:97px; overflow:hidden;">
+        <div  style="background:#1D52A0 no-repeat url('../Images/banner.jpg') 0 -25px;width: 100%;height: 97px;">
+        <div class="pageBar" style="float: right;margin:10px 20px 0 0;">
+        	<input id="qSearch" class="easyui-searchbox" data-options="prompt:'关键字检索',searcher:doSearch" style="width:150px;"/>
+        	<a href="javascript:void(0);" id="tempDown">[模板下载]</a>
+        	<a href="help/help.html" target="_blank">[帮助]</a>
+        	<a href='../logout'>[注销]</a>
+        </div>
+        <img src="../Images/logo2.png"/>
+        </div>
+    </div>
+    <!--
+      <a href=\'../logout\' title=\'注销\'><img src=\'../Scripts/jquery-easyui-1.4.1/themes/IconsExtension/control_power_blue.png\'></a>
+        <a href=\'javascript:doSearch()\' title=\'关键字搜索\'><img src=\'../Scripts/jquery-easyui-1.4.1/themes/icons/search.png\'></a>
+     -->
+    <div id="west" data-options="region:'west',title:'菜单  <a href=\'javascript:appDisplay()\' title=\'应用展示\' style=\'margin-left: 2px;display:inline-block;height: 16px;width: 17px;background:url(../Scripts/jquery-easyui-1.4.1/themes/IconsExtension/chart_organisation.png)\'></a><a href=\'javascript:dbDisplay()\' title=\'数据库展示\' style=\'margin-left: 4px;display:inline-block;height: 16px;width: 17px;background:url(../Scripts/jquery-easyui-1.4.1/themes/IconsExtension/chart_organisation.png)\'></a>',split:true,iconCls:'icon-Extension-world '" style="width:215px;">
+        <div id="RightAccordion" class="easyui-accordion" style="width:215;" ></div>
+        <div id="treeAll" style="width:215;">
+        	<ul class='easyui-tree' id='tree10' style='padding 5px 0 5px' url=''></ul>
+        </div>
+    </div>
+    <div data-options="region:'center',title:'center title',noheader:true" style="background:#eafafc;">
+        <iframe  id="frmRight" name="frmRight" class="main-frame" frameborder="no" border="0">
+        </iframe>
+    </div>
+<script src="../Scripts/jquery-easyui-1.4.1/jquery.min.js" type="text/javascript"></script>
+<script src="../Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js" type="text/javascript"></script>
+<script src="../Scripts/jquery-easyui-1.4.1/addclear.js" type="text/javascript"></script>
+<!--script src="../Scripts/jquery-easyui-1.4.1/jquery.mCustomScrollbar.concat.min.js"></script-->
+<script type="text/javascript" src="../Scripts/js/util.js"></script>
+<script type="text/javascript" src="../Scripts/js/Index.js"></script>
+<div id="dialog"></div>
+</body>
+</html>

@@ -1,0 +1,164 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <title>方法详细信息查看</title>
+    <meta http-equiv="X-UA-Compatible" content="IE=Edge" charset="UTF-8" />
+    <link rel="stylesheet" type="text/css" href="../Scripts/jquery-easyui-1.4.1/themes/default/easyui.css" />
+	<link rel="stylesheet" type="text/css" href="../Scripts/jquery-easyui-1.4.1/themes/icon.css" />
+    <link rel="stylesheet" type="text/css" href="../Styles/Site.css" />
+    <style type="text/css">
+        table.sample {
+	        border-width: 0px;
+	        border-spacing: 0px;
+	        border-style: hidden;
+        }
+        table.sample th {
+	        border-width: 0px;
+	        padding: 1px;
+	        border-style: hidden;
+        }
+        table.sample td {
+	        border-width: 0px;
+	        padding: 1px;
+	        border-style: hidden;
+        }
+    </style>
+</head>
+
+<style>
+td{padding: 5px;}
+</style>
+<body>
+<div class="easyui-panel"  style="width:100%;height:550px;overflow:scroll;">
+<div style="width:99%;min-height:240px;margin:6px 6px 0px 6px;" align="left">
+<table id="dg"  title="方法参数信息描述" style="width:100%;min-height:250px;overflow:scroll;"
+			data-options="
+                singleSelect:true,
+				url:'../param/getParamList',
+                loadMsg: '正在加载信息...',
+                method: 'post',
+                rownumbers:true,
+                fitColumns:true,
+                checkOnSelect:true,
+                onBeforeLoad:function(param){
+                    if(param.MethodID==undefined||param.MethodID==''){
+                        return false;
+                    }
+                },
+                onLoadError:function (){
+                     window.location.href='../ErrorPage/AuthorityError.html';
+                }
+                ">
+		<thead>
+			<tr>
+			<th data-options="field:'paramName',width:80,fitColumns:true">参数名称</th>
+            <th data-options="field:'paramTypeName',width:80,fitColumns:true">参数类型</th>
+            <th data-options="field:'inOrOut',width:80,fitColumns:true,formatter:forInOrOut">入参出参</th>
+			</tr>
+		</thead>
+	</table>
+    </div>
+    <div style="width:99%;min-height:205px;margin:10px 6px 0px 6px;" align="left">
+     <table id="dg1" class="easyui-datagrid" title="方法数据库信息描述" style="width:100%;min-height:205px;overflow:scroll;"
+			data-options="
+                singleSelect:true,
+				url:'../IMDORelation/getObjByMeID',
+                loadMsg: '正在加载信息...',
+                method: 'post',
+                rownumbers:true,
+                fitColumns:true,
+                checkOnSelect:true,
+                onBeforeLoad:function(param){
+                    if(param.MethodID==undefined||param.MethodID==''){
+                        return false;
+                    }
+                },
+                onLoadError:function (){
+                     window.location('../ErrorPage/AuthorityError.html');
+                }
+                ">
+		<thead>
+			<tr>
+			<th data-options="field:'dbName',width:80,fitColumns:true">数据库名称</th>
+            <th data-options="field:'objName',width:80,fitColumns:true">数据库对象名称</th>
+            <th data-options="field:'objTypeName',width:80,fitColumns:true">数据库对象类型</th>
+			</tr>
+		</thead>
+	</table>
+    </div>
+   </div>
+    <input id ="bID" type="hidden" />
+
+    <script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.min.js"></script>
+    <script type="text/javascript" src="../Scripts/json2str.js"></script>
+	<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+    <script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+    <script type="text/javascript" src="../Scripts/PIE.js"></script>
+    <script type="text/javascript" src="../Scripts/Common.js"></script>
+    <script type="text/javascript">
+        $(function () {
+            if (window.PIE) {
+                $('.rounded').each(function () {
+                    PIE.attach(this);
+                });
+            }
+            $('#dg').datagrid({
+                rowStyler: function (index, row) {
+                    return 'font-size:18pt;';
+                }
+            });
+            $('#dg1').datagrid({
+                rowStyler: function (index, row) {
+                    return 'font-size:18pt;';
+                }
+            });
+        });
+    </script>
+    <script type="text/javascript">
+
+        var MeID;
+        //获取url参数
+        function getUrlInfos(name) {
+            var reg = new RegExp("(^|&)" + name + "=([^&]*)(&|$)", "i");
+            var r = window.location.search.substr(1).match(reg);
+            if (r != null) return decodeURI(r[2]); return null;
+        }
+        $(document).ready(function () {
+
+            //添加tips提示
+           /*  $('#dg').datagrid('doCellTip',
+            {
+                onlyShowInterrupt: true,
+                position: 'bottom'
+            }); */
+            MeID = getUrlInfos("MethodID");
+
+            if (MeID != null && MeID.toString().length > 0) {
+                $("#bID").attr("value", MeID);
+                $('#dg').datagrid("load", {
+                    MethodID: MeID
+                });
+                $('#dg1').datagrid("load", {
+                    MethodID: MeID
+                });
+            }
+        });
+
+    function forInOrOut(val, row, index) {
+        var ret = "";
+        if (row.inOrOut == "0") {
+            ret = '输入参数';
+            return ret;
+        } else if (row.inOrOut == "1") {
+            ret = '输出参数';
+            return ret;
+        } else if (row.inOrOut == "2") {
+            ret = '输入、输出参数';
+            return ret;
+        } else {
+            return val;
+        }
+    }
+    </script>
+</body>
+</html>

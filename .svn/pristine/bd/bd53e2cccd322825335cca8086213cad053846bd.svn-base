@@ -1,0 +1,74 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+<title></title>
+<meta http-equiv="X-UA-Compatible" content="IE=Edge" charset="UTF-8" />
+<link rel="stylesheet" type="text/css"
+	href="../Scripts/jquery-easyui-1.4.1/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="../Scripts/jquery-easyui-1.4.1/themes/icon.css" />
+<link rel="stylesheet" type="text/css" href="../Styles/Site.css" />
+</head>
+
+<style>
+td{padding: 5px;}
+</style>
+<body style="margin: 0; padding: 0;">
+	<div class="easyui-layout" data-options="fit:true">
+		<div data-options="region:'center'" style="padding: 10px;">
+			<form id="editForm" class="easyui-form" method="post" data-options="novalidate:true">
+		    	<table style="margin: 0 auto">
+		    		<tr style="display: none;">
+		    			<td><input class="easyui-textbox" type="hidden" id="editId" name="methodID" data-options="required:false,width:160,valueField:'methodID',value:'-1'"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>方法名称:</td>
+		    			<td><input class="easyui-textbox" type="text" name="methodName" data-options="required:true,width:160,valueField: 'methodName'"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>所属应用:</td>
+		    			<td><input class="easyui-combobox" type="text" id="cmbApp2" name="appID" editable="true" data-options="required:true,width:160,valueField: 'id',textField: 'name',onSelect:getEditInterface" ></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>所属接口:</td>
+		    			<td><input class="easyui-combobox" id="cmbInterface2" type="text" name="interID" editable="true" data-options="required:true,width:160,valueField: 'id',textField: 'name'"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>方法类型:</td>
+		    			<td><input class="easyui-combobox" id="cmbMethodType2" type="text" name="methodTypeID" editable="false" data-options="required:true,width:160,valueField: 'id',textField: 'name'"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>读写:</td>
+		    			<td><input class="easyui-combobox" name="rw" id="cmbRw" editable="false" data-options="required:true,width:60,valueField: 'Rw',textField: 'Text'"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>状态:</td>
+		    			<td><input class="easyui-combobox" name="isValid" id="cmbIsValid2" editable="false" data-options="required:true,width:60,valueField: 'IsValid',textField: 'Text'"></input></td>
+		    		</tr>
+		    		<tr>
+		    			<td>方法描述:</td>
+		    			<td><input class="easyui-textbox" type="text" name="description" data-options="width:160,valueField: 'description'" multiline="true" style="height: 60px;"></input></td>
+		    		</tr>
+		    	</table>
+		    </form>
+		</div>
+		<div data-options="region:'south',border:false"
+			style="text-align: right; padding: 5px 0 0;">
+			<a class="easyui-linkbutton" data-options="iconCls:'icon-ok'"
+				href="javascript:void(0)" onclick="javascript:submitEdit()"
+				style="width: 80px">保存</a> <a class="easyui-linkbutton"
+				data-options="iconCls:'icon-cancel'" href="javascript:void(0)"
+				onclick="javascript:cancelEdit()" style="width: 80px">取消</a>
+		</div>
+	</div>
+</body>
+<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.min.js"></script>
+	<script type="text/javascript" src="../Scripts/json2str.js"></script>
+	<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+	<script type="text/javascript" src="../Scripts/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+	<script type="text/javascript" src="../Scripts/PIE.js"></script>
+	<script type="text/javascript" src="../Scripts/Common.js"></script>
+	<script type="text/javascript" src="../Scripts/js/util.js"></script>
+	<script type="text/javascript" src="../Scripts/js/MethodEditor.js"></script>
+
+</html>

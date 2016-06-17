@@ -1,0 +1,57 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<b:beans xmlns="http://www.springframework.org/schema/security"
+	xmlns:b="http://www.springframework.org/schema/beans" xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
+	xsi:schemaLocation="http://www.springframework.org/schema/beans
+http://www.springframework.org/schema/beans/spring-beans-4.2.xsd
+http://www.springframework.org/schema/security
+http://www.springframework.org/schema/security/spring-security-4.0.xsd">
+	<!--开启默认拦截 -->
+	<!-- 配置不过滤的资源（静态资源及登录相关） -->
+	    <http pattern="/**/*.css" security="none"></http>
+	    <http pattern="/**/*.jpg" security="none"></http>
+	    <http pattern="/**/*.jpeg" security="none"></http>
+	    <http pattern="/**/*.gif" security="none"></http>
+	    <http pattern="/**/*.png" security="none"></http>
+	    <http pattern="/Scripts/**/*.js" security="none"></http>
+	    <http pattern="/Styles/font/**" security="none"></http>
+	    <http pattern="/**/*.cur" security="none"></http>
+	    <http pattern="/favicon.ico" security="none"></http>
+		<http pattern="/login.html" security="none" />
+
+
+	<http auto-config='true'>
+		<intercept-url pattern="/**" access="hasRole('ROLE_USER')" />
+		<csrf disabled="true"/>
+		<headers>
+			<frame-options policy="SAMEORIGIN" />
+		</headers>
+        <form-login login-page="/login.html"
+             authentication-failure-url="/login.html?error=true"
+             default-target-url="/index.jsp" />
+        <logout logout-success-url="/login.html" />
+		<custom-filter before="FILTER_SECURITY_INTERCEPTOR" ref="myFilter"></custom-filter>
+	</http>
+	<!-- 一个自定义的filter，必须包含authenticationManager,accessDecisionManager,securityMetadataSource三个属性，
+     我们的所有控制将在这三个类中实现，解释详见具体配置 -->
+	<b:bean id="myFilter" class="com.gwamcc.aii.security.MyFilterSecurityInterceptor">
+		<b:property name="authenticationManager" ref="authenticationManager" />
+        <b:property name="accessDecisionManager" ref="myAccessDecisionManagerBean" />
+        <b:property name="securityMetadataSource" ref="securityMetadataSource" />
+	</b:bean>
+
+	<!-- 认证管理器，实现用户认证的入口，主要实现UserDetailsService接口即可 -->
+    <authentication-manager alias="authenticationManager">
+        <authentication-provider user-service-ref="myUserDetailService">
+            <!--
+                 <password-encoder hash="md5" />
+            -->
+        </authentication-provider>
+    </authentication-manager>
+    <b:bean id="myUserDetailService" class="com.gwamcc.aii.security.LoginUserDetailsService"/>
+
+    <!-- 访问决策器，决定某个用户具有的角色，是否有足够的权限去访问某个资源 -->
+    <b:bean id="myAccessDecisionManagerBean" class="com.gwamcc.aii.security.MyAccessDecisionManager"/>
+
+    <!-- 资源源数据定义，即定义某一资源可以被哪些角色访问 -->
+    <b:bean id="securityMetadataSource" class="com.gwamcc.aii.security.MyInvocationSecurityMetadataSource" />
+</b:beans>

@@ -1,0 +1,64 @@
+package com.gwamcc.aii.service.impl;
+
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
+
+import com.gwamcc.aii.dao.LogDao;
+import com.gwamcc.aii.forms.LogQueryParamForm;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.service.LogService;
+/**
+ * 日志相关服务实现类
+ * @author 范大德
+ *
+ */
+@Service
+public class LogServiceImpl implements LogService {
+	@Autowired
+    private LogDao dao;
+
+	@Override
+	public Object title(String type) throws Exception {
+		return dao.title(type);
+	}
+
+	@Override
+	public Object listByUuid(String table,String uuid, PageForm page) throws Exception {
+		return dao.listByUuid(table,uuid,page);
+	}
+
+	@Override
+	public Object list(LogQueryParamForm query, PageForm page) throws Exception {
+		return dao.list(query,page);
+	}
+
+	@Override
+	public Object rollback(String uuid) throws Exception {
+		return dao.rollback(uuid);
+	}
+
+	@Override
+	public Object tabs(String uuid) throws Exception {
+		return dao.tabs(uuid);
+	}
+
+	@Override
+	public Object tabs() throws Exception {
+		return dao.tabs();
+	}
+
+	@Override
+	public Object history(String datauuid) throws Exception {
+		return dao.history(datauuid);
+	}
+
+	@Override
+	public Object operations() throws Exception {
+		return dao.operations();
+	}
+
+
+
+
+}

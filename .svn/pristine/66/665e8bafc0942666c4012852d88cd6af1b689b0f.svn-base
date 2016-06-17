@@ -1,0 +1,298 @@
+package com.gwamcc.aii.dao.impl;
+
+import org.apache.commons.lang3.StringUtils;
+
+import java.sql.ResultSet;
+import java.sql.SQLException;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.jdbc.core.RowMapper;
+import org.springframework.stereotype.Repository;
+import org.springframework.web.multipart.MultipartFile;
+
+import com.gwamcc.aii.dao.ApplicationDao;
+import com.gwamcc.aii.dao.core.DaoValueFormatter;
+import com.gwamcc.aii.dao.core.DefaultDao;
+import com.gwamcc.aii.dao.core.SimpleDaoRowMapper;
+import com.gwamcc.aii.dao.mapper.ForceRowMapper;
+import com.gwamcc.aii.forms.AppNameForm;
+import com.gwamcc.aii.forms.ApplicationForm;
+import com.gwamcc.aii.forms.DefaultForm;
+import com.gwamcc.aii.forms.DictForm;
+import com.gwamcc.aii.forms.ForceAdjDataForm;
+import com.gwamcc.aii.forms.ForceAdjForm;
+import com.gwamcc.aii.forms.ForceNodeDataForm;
+import com.gwamcc.aii.forms.ForceNodeForm;
+import com.gwamcc.aii.forms.ForceRowArgForm;
+import com.gwamcc.aii.forms.InterForm;
+import com.gwamcc.aii.forms.MsgFrom;
+import com.gwamcc.aii.forms.PageForm;
+import com.gwamcc.aii.forms.SimpleTypeForm;
+import com.gwamcc.aii.util.ExcelKit;
+import com.gwamcc.aii.util.excel.RowValidatorList;
+import com.gwamcc.aii.util.sql2.ConditionDefBuilder;
+import com.gwamcc.aii.util.sql2.ParamMap;
+import com.gwamcc.aii.util.template.anno.Template;
+
+/**
+ * 应用程序数据操作实现类
+ *
+ * @author 范大德
+ *
+ */
+@Repository
+@Template(key="Application.xlsx",value="B000_应用程序模板.xlsx")
+public class ApplicationDaoImpl extends DefaultDao implements ApplicationDao {
+
+	@Autowired
+	private JdbcTemplate jdbcTemplate;
+
+	@Override
+	public List<DefaultForm> getApp() {
+		return queryList(AppNameForm.class, new ConditionDefBuilder().param("IsValid=:IsValid").define(),
+				new ParamMap().put("IsValid", 1));
+	}
+
+	@Override
+	public DefaultForm getAppList(ApplicationForm app, PageForm page) {
+		try {
+
+			ConditionDefBuilder builder=new ConditionDefBuilder();
+			ParamMap map=new ParamMap();
+			if(!StringUtils.isEmpty(app.getName())){
+				builder.param("T_Application.name like :name");
+				map.put("name", "%" + app.getName() + "%");
+			}
+			builder.param("T_Application.ISVALID=:valid");
+			map.put("valid", app.getValid());
+			return queryPage(ApplicationForm.class, page, new String[] { "SN","ID" },builder.define(),map);
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
+		return MsgFrom.err("后台处理发生异常!");
+	}
+
+	@Override
+	public DefaultForm append(ApplicationForm app) {
+		if (save(app))
+			return MsgFrom.info("新增成功!");
+		else
+			return MsgFrom.err("新增失败!");
+
+	}
+
+	@Override
+	public DefaultForm edit(ApplicationForm app) {
+
+		if (saveUpdate(app)) {
+			return MsgFrom.info("修改成功!");
+		} else
+			return MsgFrom.err("修改失败!");
+
+	}
+
+	@Override
+	public DefaultForm remove(int applicationID) {
+		MsgFrom msg = null;
+		try {
+			if ((msg = hasSubNode(applicationID)) != null) {
+				return msg;
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+			return MsgFrom.err("后台执行时发生错误!");
+		}
+		if (delete(new ApplicationForm().setId(applicationID))) {
+			return MsgFrom.info("删除成功!");
+		} else
+			return MsgFrom.err("删除失败!");
+	}
+
+	/**
+	 * 检测当前应用程序是否存在子节点
+	 *
+	 * @param applicationID
+	 * @return
+	 * @throws Exception
+	 */
+	private MsgFrom hasSubNode(int applicationID) throws Exception {
+		// 判断是否存在接口
+		int count = queryCount(InterForm.class,
+				new ConditionDefBuilder().param("applicationID=:applicationID").define(),
+				new ParamMap().put("applicationID", applicationID));
+
+		if (count > 0) {
+			return MsgFrom.err("此应用系统已存在接口信息,不能删除!");
+		}
+		// 判断是否存在应用功能
+		String sql = "select count(*) from T_ApplicationFunction where applicationID=?";
+		count = getJdbcTemplate().queryForObject(sql, new Object[] { applicationID }, new RowMapper<Integer>() {
+
+			@Override
+			public Integer mapRow(ResultSet rs, int arg1) throws SQLException {
+				return rs.getInt(1);
+			}
+
+		});
+		if (count > 0) {
+			return MsgFrom.err("此应用系统已存在应用功能,不能删除!");
+		}
+		//判断是否存在数据库
+		sql = "select count(*) from T_AppDataBase where ApplicationID=?";
+		count = getJdbcTemplate().queryForObject(sql, new Object[] { applicationID }, new RowMapper<Integer>() {
+
+			@Override
+			public Integer mapRow(ResultSet rs, int arg1) throws SQLException {
+				return rs.getInt(1);
+			}
+
+		});
+		if (count > 0) {
+			return MsgFrom.err("此应用系统已存在数据库,不能删除!");
+		}
+		//判断是否存在源代码
+		sql = "select count(*) from T_CodeStructure where ApplicationID=?";
+		count = getJdbcTemplate().queryForObject(sql, new Object[] { applicationID }, new RowMapper<Integer>() {
+
+			@Override
+			public Integer mapRow(ResultSet rs, int arg1) throws SQLException {
+				return rs.getInt(1);
+			}
+			
+		});
+		if (count > 0) {
+			return MsgFrom.err("此应用系统已存在源代码,不能删除!");
+		}
+		//判断是否存在公共文档
+		sql = "select count(*) from T_Attachment where ParentID=? And Type='application'";
+		count = getJdbcTemplate().queryForObject(sql, new Object[] { applicationID }, new RowMapper<Integer>() {
+
+			@Override
+			public Integer mapRow(ResultSet rs, int arg1) throws SQLException {
+				return rs.getInt(1);
+			}
+			
+		});
+		if (count > 0) {
+			return MsgFrom.err("此应用系统已存在公共文档,不能删除!");
+		}
+		
+		return null;
+	}
+
+	@Override
+	public Object appType() {
+		return queryList(SimpleTypeForm.class, new ConditionDefBuilder().param("DType=:dtype and IsValid=1").define(),
+				new ParamMap().put("dtype", "01"));
+	}
+
+	@Override
+	public List<DefaultForm> getForceData(int appID) {
+		String sql = "SELECT 2 as Level,ID,Name,Description"
+				+ " FROM T_Interface"
+				+ " where ApplicationID = ?";
+		List<DefaultForm> formList = new ArrayList<DefaultForm>();
+
+		String nodeFromID = "T_Application"+appID;
+		String appName = getAppName(appID);
+		//node-data
+		ForceNodeForm interForm = new ForceNodeForm();
+		ForceNodeDataForm nodeData = new ForceNodeDataForm();
+		nodeData.set$alpha(1)
+				.set$color(ForceNodeDaoImpl.appColor)
+				.set$type(ForceNodeDaoImpl.appType).setUrl("../pages/Application.html?appID="+appID);
+		interForm.setId(nodeFromID).setName(appName).setData(nodeData);
+		//node-adjacencies-data
+		ForceAdjDataForm adjDataForm = new ForceAdjDataForm();
+		adjDataForm.set$alpha(1).set$color(ForceNodeDaoImpl.color);
+
+		ForceRowArgForm argForm = new ForceRowArgForm();
+		argForm.setNodeID(appID)
+				.setNodeFromID(nodeFromID)
+				.setParamID("ID")
+				.setParamName("Name")
+				.setAdjData(adjDataForm)
+				.setForceNodeDao(new ForceNodeDaoImpl())
+				.setFormList(formList)
+				.setTableName("T_Interface").setJdbcTemplate(jdbcTemplate);
+
+		List<ForceAdjForm> adjFormList = jdbcTemplate.query(sql,new Object[]{appID},
+				new ForceRowMapper<ForceAdjForm>(argForm));
+		interForm.setAdjacencies(adjFormList);
+		String sql2 = "SELECT 9 as Level,B.ID,(B.Name+C.DValue) as Name"
+				+ " FROM T_ApplicationInterfaceInvoke A"
+				+ " LEFT JOIN T_InterfaceMethod B ON A.InterfaceMethodID = B.ID"
+				+ " LEFT JOIN T_Dict C ON B.MethodTypeID = C.DKey "
+				+ " WHERE A.InvokeApplicationID = ? ";
+		ForceRowArgForm argForm2 = new ForceRowArgForm();
+		argForm2.setNodeID(appID)
+				.setNodeFromID(nodeFromID)
+				.setParamID("ID")
+				.setParamName("Name")
+				.setAdjData(adjDataForm.set$color("#FFFFFF"))
+				.setForceNodeDao(new ForceNodeDaoImpl())
+				.setFormList(formList)
+				.setTableName("T_InterfaceMethod").setJdbcTemplate(jdbcTemplate);
+		List<ForceAdjForm> adjFormList2 = jdbcTemplate.query(sql2,new Object[]{appID},
+				new ForceRowMapper<ForceAdjForm>(argForm2));
+
+		adjFormList.addAll(adjFormList2);
+
+		interForm.setAdjacencies(adjFormList);
+		formList.add(interForm);
+
+		return formList;
+	}
+
+	private String getAppName(int id){
+		List<DefaultForm> formList = queryList(AppNameForm.class, new ConditionDefBuilder().param("id=:ID").define(),
+				new ParamMap().put("ID", id));
+		if(!formList.isEmpty())
+			return ((AppNameForm)(formList.get(0))).getName();
+		return null;
+	}
+
+	@Override
+	public Object upload(MultipartFile file) throws Exception {
+		return this.impExcel(ExcelKit.load(file, 0).title("Name","NAMEEN","AppType","description","IsValid")
+
+				.addValidator(new RowValidatorList(0).required("不是合法值!").unique())
+				.addFormatter(2, new DaoValueFormatter(this) {
+
+					private Map<String, String>idMap;
+
+					@Override
+					public Object format(Object value) {
+						return getIdMap().get(value);
+					}
+					private Map<String, String>getIdMap(){
+						if(idMap==null){
+							idMap=new HashMap<String,String>();
+							List<DefaultForm>list =getDao().queryList(DictForm.class);
+							for(DefaultForm form:list){
+								if (form instanceof DictForm) {
+									DictForm dict = (DictForm) form;
+									if("01".equals(dict.getDtype()))
+										idMap.put(dict.getDvalue(), dict.getDkey());
+								}
+
+							}
+						}
+						return idMap;
+					}
+				})
+				.addValidator(new RowValidatorList(4).in(0,1))
+				, new SimpleDaoRowMapper(this, ApplicationForm.class));
+	}
+
+	@Override
+	public Object download() throws Exception {
+		return TemplateDaoImpl.download(this.getClass());
+	}
+
+}

@@ -1,0 +1,86 @@
+<!DOCTYPE html PUBLIC "-//W3C//DTD XHTML 1.0 Transitional//EN" "http://www.w3.org/TR/xhtml1/DTD/xhtml1-transitional.dtd">
+<html xmlns="http://www.w3.org/1999/xhtml" xml:lang="en" lang="en">
+<head>
+<meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+<title>ForceDirected - Graph Operations</title>
+
+<!-- CSS Files -->
+<link type="text/css" href="../Styles/base.css" rel="stylesheet" />
+<link type="text/css" href="../Styles/ForceDirected.css" rel="stylesheet" />
+<link rel="stylesheet" type="text/css"
+	href="../Scripts/jquery-easyui-1.4.1/themes/default/easyui.css" />
+<link rel="stylesheet" type="text/css"
+	href="../Scripts/jquery-easyui-1.4.1/themes/icon.css" />
+
+<script language="javascript" type="text/javascript" src="../Scripts/Extras/excanvas.js"></script>
+
+<!-- JIT Library File -->
+<script language="javascript" type="text/javascript" src="../Scripts/jit-yc.js"></script>
+
+<!-- Example File -->
+<!-- script language="javascript" type="text/javascript" src="../Scripts/appdata.js"></script-->
+<script language="javascript" type="text/javascript" src="../Scripts/js/spaceAppData.js"></script>
+
+
+<script type="text/javascript"
+		src="../Scripts/jquery-easyui-1.4.1/jquery.min.js"></script>
+	<script type="text/javascript" src="../Scripts/json2str.js"></script>
+	<script type="text/javascript"
+		src="../Scripts/jquery-easyui-1.4.1/jquery.easyui.min.js"></script>
+	<script type="text/javascript"
+		src="../Scripts/jquery-easyui-1.4.1/locale/easyui-lang-zh_CN.js"></script>
+	<script type="text/javascript" src="../Scripts/PIE.js"></script>
+	<script type="text/javascript" src="../Scripts/Common.js"></script>
+	<script type="text/javascript" src="../Scripts/js/util.js"></script>
+</head>
+
+<body onload="init();">
+
+<div id="center-container">
+    <div id="infovis"></div>    
+</div>
+<div id="mm" class="easyui-menu" style="width:120px;z-index: -1">
+		<div >编辑</div>
+		<div class="menu-sep"></div>
+		<div >查看参数</div>
+
+	</div>
+<!-- <div id="App" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('Application.html')">转到应用系统</div>
+</div>
+
+<div id="Func" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('AppFunction.html')">转到应用功能</div>
+</div>
+
+<div id="Inter" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('AppInterface.html')">转到应用接口</div>
+</div>
+<div id="Method" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('InterfaceMethod.html')">转到接口方法</div>
+	<div class='menu-sep'></div>
+	<div onclick="javascript:Util.openUrl('MethodDetail.html')">查看方法参数</div>
+</div>
+<div id="InvokeMethod" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('InterfaceMethod.html')">转到接口方法</div>
+	<div class='menu-sep'></div>
+	<div onclick="javascript:Util.openUrl('MethodDetail.html')">查看方法参数</div>
+</div>
+<div id="InvokeMethod" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('InterfaceMethod.html')">转到接口方法</div>
+	<div class='menu-sep'></div>
+	<div onclick="javascript:Util.openUrl('MethodDetail.html')">查看方法参数</div>
+</div>
+
+<div id="DataBase" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('DataBase.html')">转到数据库</div>
+</div>
+<div id="DbObj" class="easyui-menu" style="width:120px;z-index: -1">
+	<div onclick="javascript:Util.openUrl('DataBaseObj.html')">转到数据库对象</div>
+	<div class='menu-sep'></div>
+	<div onclick="javascript:Util.openUrl('DbObjDetail.html')">查看对象字段</div>
+</div>
+ -->
+<div id="log"></div>
+</body>
+</html>
